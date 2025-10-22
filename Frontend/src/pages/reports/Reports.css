@@ -1,0 +1,38 @@
+.reports-wrapper { padding: 24px; }
+.kpi-card { text-align: center; }
+.kpi-value { font-size: 32px; font-weight: 600; color: #1890ff; }
+
+.kpi-footer {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #52c41a;     
+}
+
+.page-heading {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.kpi-card,
+.chart-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+.kpi-title {
+  font-size: 14px;
+  color: #8c8c8c;
+}
+.kpi-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: #1890ff;
+  margin: 8px 0 4px;
+}
+.kpi-footer {
+  font-size: 12px;
+}
+.kpi-footer.up   { color: #52c41a; }
+.kpi-footer.down { color: #ff4d4f; }
