@@ -23,6 +23,27 @@ const petitionSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    supportingFiles: [
+      {
+        filename: { type: String, required: true },
+        originalName: { type: String, required: true },
+        mimetype: { type: String, required: true },
+        size: { type: Number, required: true },
+        url: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now }
+      }
+    ],
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+          ref: "User",
+        },
+        text: { type: String, required: true, trim: true },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ],
   },
   { timestamps: true }
 );

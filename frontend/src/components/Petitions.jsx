@@ -16,6 +16,8 @@ const Petitions = () => {
   const [selectedLocation, setSelectedLocation] = useState("All Locations");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedStatus, setSelectedStatus] = useState("All");
+  const [trendingPetitions, setTrendingPetitions] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(false);
 
   useEffect(() => {
     const fetchPetitions = async () => {
@@ -37,6 +39,28 @@ const Petitions = () => {
     }
   }, [authLoading]); // 3. Rerun this effect when the authentication loading state changes
 
+  // Fetch trending petitions when activeTag is trending
+  useEffect(() => {
+    const fetchTrendingPetitions = async () => {
+      if (activeTag !== "Trending") return;
+      
+      try {
+        setTrendingLoading(true);
+        const res = await api.get("/petitions/trending?limit=50&timeWindow=7d");
+        setTrendingPetitions(res.data);
+      } catch (err) {
+        toast.error("Failed to fetch trending petitions.");
+        setTrendingPetitions([]);
+      } finally {
+        setTrendingLoading(false);
+      }
+    };
+
+    if (!authLoading) {
+      fetchTrendingPetitions();
+    }
+  }, [activeTag, authLoading]);
+
   const locations = useMemo(() => {
     if (!petitions) return ["All Locations"];
     const uniq = Array.from(new Set(petitions.map((p) => p.location)));
@@ -52,9 +76,14 @@ const Petitions = () => {
   const statuses = ["All", "Active", "Under Review", "Closed"];
 
   const filteredPetitions = useMemo(() => {
-    if (!user || !petitions) return [];
+    if (!user) return [];
+    
+    // Use trending petitions if activeTag is Trending, otherwise use regular petitions
+    const sourcePetitions = activeTag === "Trending" ? trendingPetitions : petitions;
+    if (!sourcePetitions) return [];
+    
     const currentUserId = String(user.id || user._id || "");
-    return petitions.filter((p) => {
+    return sourcePetitions.filter((p) => {
       if (
         selectedLocation !== "All Locations" &&
         p.location !== selectedLocation
@@ -80,6 +109,7 @@ const Petitions = () => {
     });
   }, [
     petitions,
+    trendingPetitions,
     selectedLocation,
     selectedCategory,
     selectedStatus,
@@ -87,17 +117,25 @@ const Petitions = () => {
     user,
   ]);
 
-  // Sort by status priority (Active > Under Review > Closed), then by votes desc
+  // Sort petitions based on activeTag
   const sortedPetitions = useMemo(() => {
+    const withDefault = Array.isArray(filteredPetitions)
+      ? [...filteredPetitions]
+      : [];
+    
+    if (activeTag === "Trending") {
+      // For trending, petitions are already sorted by trending score from backend
+      return withDefault;
+    }
+    
+    // Default sort: status priority (Active > Under Review > Closed), then by votes desc
     const rank = (status) => {
       if (status === "Active") return 0;
       if (status === "Under Review") return 1;
       if (status === "Closed") return 2;
       return 3;
     };
-    const withDefault = Array.isArray(filteredPetitions)
-      ? [...filteredPetitions]
-      : [];
+    
     return withDefault.sort((a, b) => {
       const statusDiff = rank(a?.status) - rank(b?.status);
       if (statusDiff !== 0) return statusDiff;
@@ -105,7 +143,7 @@ const Petitions = () => {
       const bVotes = Array.isArray(b?.signatures) ? b.signatures.length : 0;
       return bVotes - aVotes; // higher votes first
     });
-  }, [filteredPetitions]);
+  }, [filteredPetitions, activeTag]);
 
   const handleSign = async (petitionId) => {
     try {
@@ -137,7 +175,7 @@ const Petitions = () => {
   }
 
   // 4. Update the loading check
-  if (authLoading || loading) {
+  if (authLoading || loading || (activeTag === "Trending" && trendingLoading)) {
     return <div className="p-6 text-center">Loading petitions...</div>;
   }
 
@@ -160,7 +198,7 @@ const Petitions = () => {
 
       <div className="mb-6 bg-white p-4 rounded-lg shadow">
         <div className="flex flex-wrap gap-3 mb-4">
-          {["All", "My Petitions", "Signed by Me"].map((tag) => (
+          {["All", "Trending", "My Petitions", "Signed by Me"].map((tag) => (
             <button
               key={tag}
               onClick={() => setActiveTag(tag)}
@@ -240,6 +278,15 @@ const Petitions = () => {
                 key={petition._id}
                 className="relative bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl p-5 hover:-translate-y-2 transform transition-all shadow-md hover:shadow-2xl flex flex-col"
               >
+                {/* Trending badge positioned in top right corner */}
+                {activeTag === "Trending" && petition.trendingScore > 50 && (
+                  <div className="absolute top-3 right-3">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-orange-500 text-white uppercase">
+                      🔥 TRENDING
+                    </span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-semibold text-[#E84C3D] uppercase">
                     {petition.category}

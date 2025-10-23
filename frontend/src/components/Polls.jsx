@@ -84,36 +84,39 @@ const Polls = () => {
   }
 
   return (
-    <div className="w-full px-6 lg:max-w-5xl lg:mx-auto lg:px-0 bg-white rounded-lg shadow p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <div className="w-full px-6 lg:max-w-7xl lg:mx-auto lg:px-0">
+      <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#2D3E50]">Polls</h2>
-          <p className="text-gray-600 text-sm">
+          <h1 className="text-3xl font-bold text-[#2D3E50]">Polls</h1>
+          <p className="text-gray-600">
             Participate in community polls and make your voice heard.
           </p>
         </div>
         <button
           onClick={() => navigate("/polls/create")}
-          className="bg-[#E84C3D] text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 hover:bg-[#c73e32] transition"
+          className="px-6 py-3 bg-[#E84C3D] text-white font-semibold rounded-lg hover:bg-red-600 transition flex items-center gap-2 shadow-md hover:shadow-lg"
         >
-          <Plus className="w-5 h-5" /> Create Poll
+          <Plus className="w-5 h-5" />
+          Create Poll
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-              activeTab === tab
-                ? "bg-[#E84C3D] text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="mb-6 bg-white p-4 rounded-lg shadow">
+        <div className="flex flex-wrap gap-3">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                activeTab === tab
+                  ? "bg-[#E84C3D] text-white shadow"
+                  : "bg-gray-100 text-[#2D3E50] hover:bg-[#E84C3D] hover:text-white"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -135,7 +138,7 @@ const Polls = () => {
             return (
               <div
                 key={poll._id}
-                className="bg-gray-50 border rounded-lg p-6 relative"
+                className="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 hover:-translate-y-1 transform transition-all shadow-md hover:shadow-xl relative"
               >
                 {isOwner && (
                   <div className="absolute top-4 right-4 flex items-center space-x-2">
@@ -160,7 +163,7 @@ const Polls = () => {
                 <p className="text-xs text-gray-500 mb-2">
                   {poll.location} • Created by {poll.owner.name}
                 </p>
-                <h3 className="text-lg font-bold text-[#2D3E50] mb-4 pr-16">
+                <h3 className="text-xl font-semibold text-[#2D3E50] mb-4 pr-16">
                   {poll.question}
                 </h3>
 
@@ -173,14 +176,14 @@ const Polls = () => {
                     return (
                       <div key={option._id}>
                         {hasVoted || isExpired ? (
-                          <div>
-                            <div className="flex justify-between items-center mb-1 text-sm font-medium">
+                          <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                            <div className="flex justify-between items-center mb-2 text-sm font-medium text-[#2D3E50]">
                               <span>{option.text}</span>
-                              <span>{votePercentage}%</span>
+                              <span className="text-[#E84C3D] font-semibold">{votePercentage}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div className="w-full bg-gray-200 rounded-full h-3">
                               <div
-                                className="bg-[#E84C3D] h-2.5 rounded-full"
+                                className="bg-[#E84C3D] h-3 rounded-full transition-all duration-500"
                                 style={{ width: `${votePercentage}%` }}
                               ></div>
                             </div>
@@ -188,7 +191,7 @@ const Polls = () => {
                         ) : (
                           <button
                             onClick={() => handleVote(poll._id, option._id)}
-                            className="w-full text-left p-3 border rounded-lg hover:bg-gray-200 transition"
+                            className="w-full text-left p-4 border-2 border-gray-200 rounded-xl hover:border-[#E84C3D] hover:bg-red-50 transition-all font-medium text-[#2D3E50]"
                           >
                             {option.text}
                           </button>

@@ -26,19 +26,54 @@ const CreatePetition = () => {
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // First create the petition
       const res = await api.post("/petitions/create", formData);
 
       if (res.status === 201) {
+        const petitionId = res.data._id;
+        
+        // If there are files to upload, upload them
+        if (selectedFiles.length > 0) {
+          setUploadingFiles(true);
+          const formDataFiles = new FormData();
+          selectedFiles.forEach(file => {
+            formDataFiles.append('files', file);
+          });
+          
+          try {
+            await api.post(`/petitions/${petitionId}/files`, formDataFiles, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            });
+          } catch (fileErr) {
+            console.error('File upload error:', fileErr);
+            toast.warning("Petition created but some files failed to upload.");
+          }
+          setUploadingFiles(false);
+        }
+        
         toast.success("Petition created successfully!");
         
         // Trigger dashboard refresh
@@ -185,12 +220,56 @@ const CreatePetition = () => {
           ></textarea>
         </div>
 
+        {/* Supporting Files */}
+        <div className="mb-6">
+          <label className="block text-[#2D3E50] font-medium mb-1">
+            Supporting Files (Images/Documents)
+          </label>
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              id="files"
+              multiple
+              accept="image/*,.pdf"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <label
+              htmlFor="files"
+              className="px-4 py-2 bg-gray-100 text-[#2D3E50] rounded-lg hover:bg-gray-200 cursor-pointer transition"
+            >
+              Choose files
+            </label>
+            <span className="text-sm text-gray-500">
+              {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) chosen` : "No file chosen"}
+            </span>
+          </div>
+          
+          {/* Display selected files */}
+          {selectedFiles.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(index)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || uploadingFiles}
           className="w-full py-3 bg-[#E84C3D] text-white font-semibold rounded-lg hover:bg-red-600 transition duration-300 disabled:bg-gray-400"
         >
-          {isSubmitting ? "Submitting..." : "Create Petition"}
+          {uploadingFiles ? "Uploading files..." : isSubmitting ? "Submitting..." : "Create Petition"}
         </button>
       </form>
     </div>

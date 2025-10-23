@@ -119,7 +119,7 @@ const CitizenDashboard = () => {
         </h2>
         <p className="text-gray-600">See what's happening in your community.</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white shadow rounded-lg p-4 border-t-4 border-[#E84C3D]">
           <h3 className="text-gray-500 text-sm">My Petitions</h3>
           <p className="text-2xl font-bold text-[#2D3E50]">
@@ -141,21 +141,24 @@ const CitizenDashboard = () => {
       </div>
       
       {/* Time Filter and Engagement Chart */}
-      <div className="mt-6">
-        <div className="mb-4">
+      <div className="mt-4 sm:mt-6">
+        <div className="mb-3 sm:mb-4">
           <TimeFilter 
             selectedPeriod={selectedPeriod}
             onPeriodChange={handlePeriodChange}
             className="justify-center"
           />
         </div>
-        <EngagementChart
-          petitionsData={engagementData.petitionsData}
-          pollsData={engagementData.pollsData}
-          labels={engagementData.labels}
-          loading={loading}
-          onDataFetch={() => fetchEngagementData(selectedPeriod)}
-        />
+        <div className="overflow-x-auto">
+          <EngagementChart
+            petitionsData={engagementData.petitionsData}
+            pollsData={engagementData.pollsData}
+            labels={engagementData.labels}
+            loading={loading}
+            onDataFetch={() => fetchEngagementData(selectedPeriod)}
+            className="min-w-[300px]"
+          />
+        </div>
       </div>
     </>
   );

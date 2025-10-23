@@ -20,6 +20,13 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res, path) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
+
 // Define an array of all allowed frontend URLs
 const allowedOrigins = [
   process.env.CLIENT_URL, // Your local dev URL (e.g., http://localhost:5173)
