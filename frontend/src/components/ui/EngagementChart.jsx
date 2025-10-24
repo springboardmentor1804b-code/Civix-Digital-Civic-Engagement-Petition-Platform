@@ -1,4 +1,3 @@
-git remote add origin https://github.com/springboardmentor1804b-code/Civix-Digital-Civic-Engagement-Petition-Platform.git
 import React, { useMemo, useState, useRef, useEffect } from "react";
 
 const EngagementChart = ({
