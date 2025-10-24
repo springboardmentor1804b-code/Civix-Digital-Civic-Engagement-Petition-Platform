@@ -191,37 +191,59 @@ export const getTrendingPetitions = async (req, res) => {
 
     const cutoffDate = new Date(Date.now() - timeWindowMs);
     
-    // Get all petitions created within the time window
-    const petitions = await Petition.find({
-      createdAt: { $gte: cutoffDate },
-      status: { $in: ['Active', 'Under Review'] } // Only active and under review petitions
+    // First, let's check all active petitions regardless of time window
+    const allActivePetitions = await Petition.find({
+      status: 'Active'
     })
     .populate("owner", "name")
     .lean();
+
+    console.log(`Total active petitions: ${allActivePetitions.length}`);
+    
+    // Filter for petitions with signatures and show their details
+    const petitionsWithSignatures = allActivePetitions.filter(p => p.signatures && p.signatures.length > 0);
+    console.log(`Active petitions with signatures: ${petitionsWithSignatures.length}`);
+    
+    petitionsWithSignatures.forEach(p => {
+      console.log(`- "${p.title}": ${p.signatures.length} signatures, created: ${p.createdAt}`);
+    });
+
+    // Get petitions for trending (relaxed criteria for now)
+    const petitions = await Petition.find({
+      status: 'Active', // Only active petitions
+      $expr: { $gt: [{ $size: '$signatures' }, 0] } // Only petitions with at least 1 signature
+    })
+    .populate("owner", "name")
+    .lean();
+
+    console.log(`Found ${petitions.length} active petitions with signatures for trending`);
 
     // Calculate trending score for each petition
     const petitionsWithScore = petitions.map(petition => {
       const now = new Date();
       const createdAt = new Date(petition.createdAt);
       const ageInHours = (now - createdAt) / (1000 * 60 * 60);
+      const signatureCount = petition.signatures.length;
       
-      // Base score from signature count
-      const signatureScore = petition.signatures.length;
+      // Primary factor: Signature count (weighted heavily)
+      const signatureScore = signatureCount * 10; // 10 points per signature
       
-      // Recency score (newer petitions get higher score)
-      const recencyScore = Math.max(0, 100 - ageInHours * 2); // Decreases by 2 points per hour
+      // Recency score (newer petitions get higher score, but less weight)
+      const recencyScore = Math.max(0, 50 - ageInHours * 1); // Decreases by 1 point per hour
       
-      // Velocity score (signatures per hour)
-      const velocityScore = ageInHours > 0 ? (petition.signatures.length / ageInHours) * 10 : 0;
+      // Velocity score (signatures per hour) - only if petition is recent
+      const velocityScore = ageInHours > 0 && ageInHours < 168 ? (signatureCount / ageInHours) * 5 : 0;
       
-      // Goal achievement score (percentage of goal reached)
-      const goalScore = petition.goal > 0 ? (petition.signatures.length / petition.goal) * 50 : 0;
+      // Goal achievement bonus (percentage of goal reached)
+      const goalScore = petition.goal > 0 ? (signatureCount / petition.goal) * 20 : 0;
       
-      // Status bonus (Active petitions get higher score)
-      const statusBonus = petition.status === 'Active' ? 20 : 10;
+      // Minimum threshold bonus (petitions with 3+ signatures get extra points)
+      const thresholdBonus = signatureCount >= 3 ? 15 : 0;
       
       // Calculate final trending score
-      const trendingScore = signatureScore + recencyScore + velocityScore + goalScore + statusBonus;
+      const trendingScore = signatureScore + recencyScore + velocityScore + goalScore + thresholdBonus;
+      
+      console.log(`Petition "${petition.title}": ${signatureCount} signatures, ${Math.round(ageInHours)}h old, score: ${Math.round(trendingScore)}`);
       
       return {
         ...petition,

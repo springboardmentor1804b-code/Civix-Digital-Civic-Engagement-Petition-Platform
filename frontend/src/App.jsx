@@ -20,6 +20,7 @@ import Polls from "./components/Polls";
 import CreatePoll from "./components/CreatePoll";
 import EditPoll from "./components/EditPoll"; // 1. Import EditPoll
 import Reports from "./components/Reports";
+import Settings from "./components/Settings";
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
               {/* 2. Add the route for editing a single poll */}
               <Route path="/polls/:id/edit" element={<EditPoll />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
         </Routes>

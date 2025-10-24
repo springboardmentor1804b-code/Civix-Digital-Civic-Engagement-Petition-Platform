@@ -319,12 +319,19 @@ const EngagementChart = ({
             });
           })()}
           
-          {/* Modern X-axis labels - Show only every 3rd label to prevent overlap */}
+          {/* Modern X-axis labels - Hide on mobile devices */}
           {(() => {
             const padding = 30;
             const chartWidth = chartDimensions.width - padding * 2;
             const safeLabels = Array.isArray(labels) && labels.length > 0 ? labels : [];
             const step = Math.max(1, Math.floor(safeLabels.length / 8)); // Show max 8 labels
+            
+            // Hide labels on mobile devices (screen width < 768px)
+            const isMobile = chartDimensions.width < 768;
+            
+            if (isMobile) {
+              return null; // Don't render labels on mobile
+            }
             
             return safeLabels
               .filter((_, index) => index % step === 0 || index === safeLabels.length - 1)
@@ -461,37 +468,40 @@ const EngagementChart = ({
           <div
             className="absolute bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-800 px-3 py-2 rounded-lg shadow-lg text-xs pointer-events-none z-20"
             style={{
-              left: Math.min(tooltipPosition.x + 10, window.innerWidth - 150),
-              top: Math.max(tooltipPosition.y - 80, 10),
+              left: Math.min(Math.max(tooltipPosition.x - 10, 10), chartDimensions.width - 120),
+              top: Math.max(tooltipPosition.y - 10, 10),
               background: 'rgba(255,255,255,0.95)',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
             }}
           >
-            <div className="font-semibold text-sm mb-2 text-gray-800 text-center">
-              {(() => {
-                try {
-                  // Handle different label formats
-                  if (typeof hoveredPoint.label === 'string') {
-                    // If it's already a formatted string, use it
-                    if (hoveredPoint.label.includes('Mon') || hoveredPoint.label.includes('Tue')) {
+            {/* Hide date label on mobile devices */}
+            {chartDimensions.width >= 768 && (
+              <div className="font-semibold text-sm mb-2 text-gray-800 text-center">
+                {(() => {
+                  try {
+                    // Handle different label formats
+                    if (typeof hoveredPoint.label === 'string') {
+                      // If it's already a formatted string, use it
+                      if (hoveredPoint.label.includes('Mon') || hoveredPoint.label.includes('Tue')) {
+                        return hoveredPoint.label;
+                      }
+                      // Try to parse as date
+                      const date = new Date(hoveredPoint.label);
+                      if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        });
+                      }
                       return hoveredPoint.label;
                     }
-                    // Try to parse as date
-                    const date = new Date(hoveredPoint.label);
-                    if (!isNaN(date.getTime())) {
-                      return date.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      });
-                    }
-                    return hoveredPoint.label;
+                    return 'Invalid Date';
+                  } catch (e) {
+                    return hoveredPoint.label || 'Invalid Date';
                   }
-                  return 'Invalid Date';
-                } catch (e) {
-                  return hoveredPoint.label || 'Invalid Date';
-                }
-              })()}
-            </div>
+                })()}
+              </div>
+            )}
             
             <div className="space-y-1">
               <div className="flex items-center justify-between">

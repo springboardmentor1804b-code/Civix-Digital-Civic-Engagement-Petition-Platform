@@ -54,11 +54,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (userData) => {
+    setUser(userData);
+    sessionStorage.setItem("user", JSON.stringify(userData));
+  };
+
   const value = {
     user,
     loading,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user,
   };
 

@@ -46,9 +46,12 @@ const Petitions = () => {
       
       try {
         setTrendingLoading(true);
+        console.log("Fetching trending petitions...");
         const res = await api.get("/petitions/trending?limit=50&timeWindow=7d");
+        console.log("Trending petitions response:", res.data);
         setTrendingPetitions(res.data);
       } catch (err) {
+        console.error("Failed to fetch trending petitions:", err);
         toast.error("Failed to fetch trending petitions.");
         setTrendingPetitions([]);
       } finally {
@@ -60,6 +63,32 @@ const Petitions = () => {
       fetchTrendingPetitions();
     }
   }, [activeTag, authLoading]);
+
+  // Refresh trending petitions when petition data changes
+  useEffect(() => {
+    const handlePetitionUpdate = () => {
+      if (activeTag === "Trending") {
+        const fetchTrendingPetitions = async () => {
+          try {
+            const res = await api.get("/petitions/trending?limit=50&timeWindow=7d");
+            setTrendingPetitions(res.data);
+          } catch (err) {
+            console.error("Failed to refresh trending petitions:", err);
+          }
+        };
+        fetchTrendingPetitions();
+      }
+    };
+
+    // Listen for petition updates
+    window.addEventListener('petitionUpdated', handlePetitionUpdate);
+    window.addEventListener('contentCreated', handlePetitionUpdate);
+
+    return () => {
+      window.removeEventListener('petitionUpdated', handlePetitionUpdate);
+      window.removeEventListener('contentCreated', handlePetitionUpdate);
+    };
+  }, [activeTag]);
 
   const locations = useMemo(() => {
     if (!petitions) return ["All Locations"];
@@ -84,6 +113,12 @@ const Petitions = () => {
     
     const currentUserId = String(user.id || user._id || "");
     return sourcePetitions.filter((p) => {
+      // For trending filter, only show active petitions with signatures
+      if (activeTag === "Trending") {
+        if (p.status !== "Active") return false;
+        if (!p.signatures || p.signatures.length === 0) return false;
+      }
+      
       if (
         selectedLocation !== "All Locations" &&
         p.location !== selectedLocation
@@ -151,10 +186,19 @@ const Petitions = () => {
       setPetitions((prev) =>
         prev.map((p) => (p._id === petitionId ? res.data : p))
       );
+      
+      // Update trending petitions if currently viewing trending
+      if (activeTag === "Trending") {
+        setTrendingPetitions((prev) =>
+          prev.map((p) => (p._id === petitionId ? res.data : p))
+        );
+      }
+      
       toast.success("Petition signed successfully!");
       
       // Trigger dashboard refresh for engagement data
       window.dispatchEvent(new CustomEvent('contentCreated'));
+      window.dispatchEvent(new CustomEvent('petitionUpdated'));
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to sign petition.");
     }
@@ -279,7 +323,7 @@ const Petitions = () => {
                 className="relative bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl p-5 hover:-translate-y-2 transform transition-all shadow-md hover:shadow-2xl flex flex-col"
               >
                 {/* Trending badge positioned in top right corner */}
-                {activeTag === "Trending" && petition.trendingScore > 50 && (
+                {activeTag === "Trending" && (
                   <div className="absolute top-3 right-3">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-orange-500 text-white uppercase">
                       🔥 TRENDING
