@@ -1,38 +1,45 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
-// Define storage location and filename format
+// Ensure uploads directory exists
+const uploadDir = 'uploads/petitions';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure multer for file uploads
 const storage = multer.diskStorage({
-    destination(req, file, cb) {
-        // Files will be stored in the 'uploads' folder in the backend root
-        cb(null, 'uploads/'); 
-    },
-    filename(req, file, cb) {
-        // Creates a unique filename: fieldname-timestamp.ext
-        cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-    },
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename with timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
-// File filter to accept only images and common document types
+// File filter to allow only images and PDFs
 const fileFilter = (req, file, cb) => {
-    // Regex for allowed file extensions (case-insensitive)
-    const allowedTypes = /\.(jpeg|jpg|png|gif|pdf|doc|docx)$/i; 
-    
-    const extname = allowedTypes.test(path.extname(file.originalname));
-    // Check MIME type as well for security
-    const mimetype = file.mimetype.startsWith('image/') || file.mimetype.includes('pdf') || file.mimetype.includes('document');
+  const allowedTypes = /jpeg|jpg|png|gif|pdf/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
 
-    if (extname && mimetype) {
-        return cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only images, PDF, and MS Office documents are allowed.'), false);
-    }
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only images and PDF files are allowed!'));
+  }
 };
 
 const upload = multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: 1024 * 1024 * 10 }, // Limit to 10MB
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: fileFilter
 });
 
 export default upload;
+

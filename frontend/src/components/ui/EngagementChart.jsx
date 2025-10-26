@@ -10,6 +10,22 @@ const EngagementChart = ({
   onDataFetch,
   loading = false,
 }) => {
+  // Make chart responsive
+  const [chartDimensions, setChartDimensions] = useState({ width: 800, height: 300 });
+  
+  useEffect(() => {
+    const updateDimensions = () => {
+      const containerWidth = Math.min(window.innerWidth - 48, 800); // Account for padding
+      setChartDimensions({
+        width: containerWidth,
+        height: Math.max(250, containerWidth * 0.4) // Maintain aspect ratio
+      });
+    };
+    
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const svgRef = useRef(null);
@@ -50,8 +66,8 @@ const EngagementChart = ({
     const range = Math.max(maxValue - minValue, 1);
     
     const padding = 30;
-    const chartWidth = width - padding * 2;
-    const chartHeight = height - padding * 2;
+    const chartWidth = chartDimensions.width - padding * 2;
+    const chartHeight = chartDimensions.height - padding * 2;
     
     const normalize = (value) => {
       return chartHeight - ((value - minValue) / range) * chartHeight;
@@ -169,7 +185,7 @@ const EngagementChart = ({
   }
 
   return (
-    <div className={`bg-white shadow rounded-lg p-6 ${className}`}>
+    <div className={`bg-white shadow rounded-lg p-3 sm:p-6 ${className}`}>
       <div className="flex justify-between items-center mb-4">
         <div>
           <h3 className="text-lg font-semibold text-[#2D3E50]">
@@ -242,10 +258,10 @@ const EngagementChart = ({
         
         <svg
           ref={svgRef}
-          width={width}
-          height={height}
+          width={chartDimensions.width}
+          height={chartDimensions.height}
           className="w-full h-auto cursor-crosshair touch-none relative z-10"
-          viewBox={`0 0 ${width} ${height}`}
+          viewBox={`0 0 ${chartDimensions.width} ${chartDimensions.height}`}
           role="img"
           aria-label="Engagement trends chart"
           onMouseMove={handleMouseMove}
@@ -289,7 +305,7 @@ const EngagementChart = ({
           {/* Modern Y-axis labels */}
           {(() => {
             const padding = 30;
-            const chartHeight = height - padding * 2;
+            const chartHeight = chartDimensions.height - padding * 2;
             return [0, 1, 2, 3, 4, 5].map((value) => {
               const y = padding + (chartHeight - (value / 5) * chartHeight);
               return (
@@ -303,12 +319,19 @@ const EngagementChart = ({
             });
           })()}
           
-          {/* Modern X-axis labels - Show only every 3rd label to prevent overlap */}
+          {/* Modern X-axis labels - Hide on mobile devices */}
           {(() => {
             const padding = 30;
-            const chartWidth = width - padding * 2;
+            const chartWidth = chartDimensions.width - padding * 2;
             const safeLabels = Array.isArray(labels) && labels.length > 0 ? labels : [];
             const step = Math.max(1, Math.floor(safeLabels.length / 8)); // Show max 8 labels
+            
+            // Hide labels on mobile devices (screen width < 768px)
+            const isMobile = chartDimensions.width < 768;
+            
+            if (isMobile) {
+              return null; // Don't render labels on mobile
+            }
             
             return safeLabels
               .filter((_, index) => index % step === 0 || index === safeLabels.length - 1)
@@ -319,13 +342,31 @@ const EngagementChart = ({
                   <text 
                     key={originalIndex}
                     x={x} 
-                    y={height - 15} 
+                    y={chartDimensions.height - 15} 
                     textAnchor="middle" 
                     fontSize="10" 
                     fill="#6b7280"
                     fontWeight="500"
                   >
-                    {new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {(() => {
+                      try {
+                        if (typeof label === 'string') {
+                          // If it's already a formatted string, use it
+                          if (label.includes('Mon') || label.includes('Tue') || label.includes('Wed') || label.includes('Thu') || label.includes('Fri') || label.includes('Sat') || label.includes('Sun')) {
+                            return label;
+                          }
+                          // Try to parse as date
+                          const date = new Date(label);
+                          if (!isNaN(date.getTime())) {
+                            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          }
+                          return label;
+                        }
+                        return 'Invalid Date';
+                      } catch (e) {
+                        return label || 'Invalid Date';
+                      }
+                    })()}
                   </text>
                 );
               });
@@ -422,50 +463,66 @@ const EngagementChart = ({
           ))}
         </svg>
 
-        {/* Modern Glassmorphism Tooltip */}
+        {/* Compact Tooltip */}
         {hoveredPoint && (
           <div
-            className="absolute bg-white/90 backdrop-blur-lg border border-white/20 text-gray-800 px-6 py-4 rounded-2xl shadow-2xl text-sm pointer-events-none z-20 max-w-xs"
+            className="absolute bg-white/95 backdrop-blur-sm border border-gray-200 text-gray-800 px-3 py-2 rounded-lg shadow-lg text-xs pointer-events-none z-20"
             style={{
-              left: Math.min(tooltipPosition.x - 60, window.innerWidth - 200),
-              top: Math.max(tooltipPosition.y - 120, 10),
-              transform: 'translateX(-50%)',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              left: Math.min(Math.max(tooltipPosition.x - 10, 10), chartDimensions.width - 120),
+              top: Math.max(tooltipPosition.y - 10, 10),
+              background: 'rgba(255,255,255,0.95)',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
             }}
           >
-            <div className="font-bold text-xl mb-3 text-gray-800 text-center">
-              {new Date(hoveredPoint.label).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'short', 
-                day: 'numeric' 
-              })}
-            </div>
+            {/* Hide date label on mobile devices */}
+            {chartDimensions.width >= 768 && (
+              <div className="font-semibold text-sm mb-2 text-gray-800 text-center">
+                {(() => {
+                  try {
+                    // Handle different label formats
+                    if (typeof hoveredPoint.label === 'string') {
+                      // If it's already a formatted string, use it
+                      if (hoveredPoint.label.includes('Mon') || hoveredPoint.label.includes('Tue')) {
+                        return hoveredPoint.label;
+                      }
+                      // Try to parse as date
+                      const date = new Date(hoveredPoint.label);
+                      if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        });
+                      }
+                      return hoveredPoint.label;
+                    }
+                    return 'Invalid Date';
+                  } catch (e) {
+                    return hoveredPoint.label || 'Invalid Date';
+                  }
+                })()}
+              </div>
+            )}
             
-            <div className="space-y-3">
-              <div className="flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100 px-4 py-3 rounded-xl border border-red-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-sm"></div>
-                  <span className="font-semibold text-gray-700">Petitions</span>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-xs font-medium text-gray-700">Petitions</span>
                 </div>
-                <span className="font-bold text-red-600 text-xl">
+                <span className="font-bold text-red-600 text-sm">
                   {hoveredPoint.petitions}
                 </span>
               </div>
               
-              <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 rounded-xl border border-blue-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full shadow-sm"></div>
-                  <span className="font-semibold text-gray-700">Polls</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-xs font-medium text-gray-700">Polls</span>
                 </div>
-                <span className="font-bold text-blue-600 text-xl">
+                <span className="font-bold text-blue-600 text-sm">
                   {hoveredPoint.polls}
                 </span>
               </div>
-            </div>
-            
-            <div className="mt-3 text-xs text-gray-500 text-center font-medium">
-              💡 Hover to explore daily activity
             </div>
           </div>
         )}

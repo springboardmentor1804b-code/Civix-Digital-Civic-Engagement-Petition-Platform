@@ -29,6 +29,11 @@ export const AuthProvider = ({ children }) => {
         console.log("No valid session found. Logging out.");
         setUser(null);
         sessionStorage.removeItem("user");
+        // Only redirect if not already on login/register pages
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          // Use replace to avoid adding to history stack
+          window.history.replaceState(null, '', '/login');
+        }
       } finally {
         setLoading(false);
       }
@@ -51,7 +56,14 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       sessionStorage.removeItem("user");
+      // Force redirect to login page after logout
+      window.location.href = '/login';
     }
+  };
+
+  const updateUser = (userData) => {
+    setUser(userData);
+    sessionStorage.setItem("user", JSON.stringify(userData));
   };
 
   const value = {
@@ -59,6 +71,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user,
   };
 
