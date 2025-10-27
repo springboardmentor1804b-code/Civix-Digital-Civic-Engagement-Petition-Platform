@@ -60,6 +60,11 @@ const CreatePoll = () => {
 
       if (res.status === 201) {
         toast.success("Poll created successfully!");
+        
+        // Trigger dashboard refresh
+        localStorage.setItem('pollCreated', Date.now().toString());
+        window.dispatchEvent(new CustomEvent('contentCreated'));
+        
         navigate("/polls");
       }
     } catch (err) {
@@ -72,7 +77,7 @@ const CreatePoll = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+    <div className="w-full px-4 md:px-6 lg:max-w-4xl lg:mx-auto lg:px-0">
       <h1 className="flex items-center gap-2 text-3xl font-bold mb-6 text-[#2D3E50]">
         <BarChart3 className="w-8 h-8 text-[#E84C3D]" /> Poll Creation
       </h1>

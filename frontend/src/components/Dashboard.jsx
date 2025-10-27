@@ -43,12 +43,12 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-white lg:bg-gray-100">
+      {/* Sidebar - Fixed */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 w-64 bg-[#2D3E50] text-white shadow-md transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:static flex flex-col`}
+        } lg:translate-x-0 flex flex-col`}
       >
         <div className="p-6 text-xl font-bold flex justify-between items-center">
           Civix <span className="text-gray-400 text-sm">Beta</span>
@@ -92,9 +92,10 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Main content area */}
-      <main className="flex-1 p-6">
-        <header className="flex justify-between items-center lg:hidden mb-4">
+      {/* Main content area - Scrollable */}
+      <main className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+        {/* Header - Only visible on mobile */}
+        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center lg:hidden">
           <button onClick={() => setSidebarOpen(true)}>
             <Menu className="w-6 h-6" />
           </button>
@@ -105,8 +106,14 @@ const Dashboard = () => {
             </div>
           </div>
         </header>
-        {/* 3. Outlet will render the correct page (DashboardContent, Petitions, etc.) */}
-        <Outlet />
+
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto bg-white lg:bg-gray-100">
+          <div className="p-6">
+            {/* 3. Outlet will render the correct page (DashboardContent, Petitions, etc.) */}
+            <Outlet />
+          </div>
+        </div>
       </main>
     </div>
   );
