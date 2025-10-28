@@ -7,10 +7,9 @@ dotenv.config();
 const cleanSignatures = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to MongoDB');
 
     // Remove any signatures with null petition or user
-    const deleteResult = await Signature.deleteMany({
+    await Signature.deleteMany({
       $or: [
         { petition: null },
         { user: null },
@@ -18,14 +17,10 @@ const cleanSignatures = async () => {
         { user: { $exists: false } }
       ]
     });
-    
-    console.log(`Deleted ${deleteResult.deletedCount} invalid signatures`);
 
     // Create the proper index
     await Signature.collection.createIndex({ petition: 1, user: 1 }, { unique: true });
-    console.log('Created proper compound index');
 
-    console.log('Cleanup completed successfully');
     process.exit(0);
   } catch (error) {
     console.error('Cleanup failed:', error);

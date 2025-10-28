@@ -10,14 +10,27 @@ const ResultsStats = ({ polls, loading }) => {
       };
     }
 
-    const totalVotes = polls.reduce((sum, poll) => sum + poll.totalVotes, 0);
-    const avgEngagement = polls.reduce((sum, poll) => sum + poll.engagementRate, 0) / polls.length;
-    const activePolls = polls.filter(poll => poll.status === 'Active').length;
+    const totalVotes = polls.reduce((sum, poll) => sum + (poll.votes?.length || 0), 0);
+    
+    // Calculate average engagement rate (votes per day)
+    const engagementRates = polls.map(poll => {
+      const pollVotes = poll.votes?.length || 0;
+      if (!poll.createdAt || pollVotes === 0) return 0;
+      
+      const createdAt = new Date(poll.createdAt);
+      const now = new Date();
+      const daysAgo = Math.max((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24), 0.01);
+      
+      return pollVotes / daysAgo;
+    });
+    
+    const avgEngagement = engagementRates.reduce((sum, rate) => sum + rate, 0) / polls.length;
+    const activePolls = polls.filter(poll => poll.status === 'Active' || poll.status === 'active').length;
 
     return {
       totalPolls: polls.length,
       totalVotes,
-      avgEngagement: avgEngagement.toFixed(2),
+      avgEngagement: avgEngagement.toFixed(1),
       activePolls
     };
   }, [polls]);
@@ -45,7 +58,7 @@ const ResultsStats = ({ polls, loading }) => {
       color: "text-purple-600",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200",
-      description: "Votes per hour"
+      description: "Votes per day"
     },
     
   ];

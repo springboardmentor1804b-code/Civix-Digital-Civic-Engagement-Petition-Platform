@@ -1,14 +1,13 @@
-import {
-  BrowserRouter as Router,
-  Navigate,
-  Route,
-  Routes,
-} from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
+// Import pages
+import Home from '../pages/Home';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
-import Dashboard from '../pages/dashboard/Dashboard'; 
-import Home from '../pages/Home';
+import Dashboard from '../pages/dashboard/Dashboard';
+import HelpSupport from '../pages/help&support/helpsupport';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import PetitionList from '../pages/petitions/PetitionList';
 import CreatePetition from '../pages/petitions/CreatePetition';
@@ -19,14 +18,33 @@ import OfficialAnalytics from '../pages/analytics/OfficialAnalytics';
 import Reports from '../pages/reports/Reports';
 import ResultsDashboard from '../pages/results/ResultsDashboard';
 import SearchPage from '../pages/search/SearchPage';
+import Settings from '../pages/settings/settings';
 
-export default function AppRouter() {
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" />;
+};
+
+const AppRouter = () => {
   return (
-    <Router>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Protected routes */}
+        <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
         
         {/* Search route - accessible without dashboard wrapper */}
         <Route path="/search" element={<SearchPage />} />
@@ -55,13 +73,14 @@ export default function AppRouter() {
 
           {/* Other routes */}          
           <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
-          <Route path="help" element={<div>Help & Support Page - Coming Soon</div>} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="help" element={<HelpSupport />} />
         </Route>
         
-        {/* Redirect unknown routes to home */}
+        {/* Catch all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </Router>
   );
-}
+};
+
+export default AppRouter;

@@ -1,14 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import petitionService from '../../services/petitionService';
 
 const PetitionFilters = ({ activeFilter, onFilterChange }) => {
   const [dropdowns, setDropdowns] = useState({ location: false, status: false, type: false });
   const [isMobile, setIsMobile] = useState(false);
+  const [locations, setLocations] = useState(['All Locations']);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [locationCounts, setLocationCounts] = useState({});
 
-  const petitionTypes = ['Active Petitions', 'Petitions I Signed', 'My Petitions', 'Closed Petitions'];
-  const locations = ['All Locations', 'San Diego, CA', 'Los Angeles, CA', 'New York, NY', 'Chicago, IL', 'Miami, FL'];
+  const petitionTypes = ['Active Petitions', 'Petitions I Signed', 'My Petitions', 'All Petitions'];
   const statuses = ['All Status', 'Active', 'Closed', 'Under Review'];
+
+  // Fetch real-time locations from petitions
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        setLoadingLocations(true);
+        const response = await petitionService.getAllPetitions();
+        const petitions = response.petitions || [];
+        
+        // Extract unique locations and count petitions per location
+        const locationMap = {};
+        petitions.forEach(petition => {
+          if (petition.location) {
+            locationMap[petition.location] = (locationMap[petition.location] || 0) + 1;
+          }
+        });
+        
+        // Sort locations alphabetically
+        const uniqueLocations = Object.keys(locationMap).sort();
+        
+        setLocations(['All Locations', ...uniqueLocations]);
+        setLocationCounts(locationMap);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+        setLocations(['All Locations']);
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+
+    fetchLocations();
+    
+    // Refresh locations every 30 seconds
+    const interval = setInterval(fetchLocations, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check if screen is mobile size
   useEffect(() => {
@@ -32,8 +72,16 @@ const PetitionFilters = ({ activeFilter, onFilterChange }) => {
   };
 
   const handleSelect = (type, value) => {
+    console.log('=== FILTER SELECT DEBUG ===');
+    console.log('Type:', type);
+    console.log('Value:', value);
+    console.log('Current activeFilter:', activeFilter);
+    
     onFilterChange(type, value);
     setDropdowns(prev => ({ ...prev, [type]: false }));
+    
+    console.log('Filter change triggered');
+    console.log('========================');
   };
 
   const clearFilters = () => {
@@ -53,6 +101,16 @@ const PetitionFilters = ({ activeFilter, onFilterChange }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Calculate total petitions count
+  const totalPetitions = Object.values(locationCounts).reduce((sum, count) => sum + count, 0);
+
+  // DEBUG: Log activeFilter changes
+  useEffect(() => {
+    console.log('=== ACTIVE FILTER CHANGED ===');
+    console.log('Current filters:', activeFilter);
+    console.log('============================');
+  }, [activeFilter]);
 
   return (
     <div className="mb-6">
@@ -142,13 +200,17 @@ const PetitionFilters = ({ activeFilter, onFilterChange }) => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4">
-            {/* Location Filter */}
+            {/* Location Filter - Real-time from petitions */}
             <div className="relative dropdown-container">
               <button
                 onClick={() => toggleDropdown('location')}
-                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                disabled={loadingLocations}
+                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{activeFilter.location || 'All Locations'}</span>
+                
+                <span>
+                  {loadingLocations ? 'Loading...' : (activeFilter.location || 'All Locations')}
+                </span>
                 <svg 
                   className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${dropdowns.location ? 'rotate-180' : ''}`} 
                   fill="none" 
@@ -158,21 +220,39 @@ const PetitionFilters = ({ activeFilter, onFilterChange }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {dropdowns.location && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
-                  {locations.map(item => (
-                    <button 
-                      key={item} 
-                      onClick={() => handleSelect('location', item)} 
-                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                        activeFilter.location === item
-                          ? 'bg-blue-50 text-blue-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
+              {dropdowns.location && !loadingLocations && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {locations.map(item => {
+                    const count = item === 'All Locations' ? totalPetitions : (locationCounts[item] || 0);
+                    return (
+                      <button 
+                        key={item} 
+                        onClick={() => handleSelect('location', item)} 
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between ${
+                          activeFilter.location === item
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {item !== 'All Locations' && <LocationOnIcon sx={{ fontSize: 14 }} />}
+                          {item}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          activeFilter.location === item
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {locations.length === 1 && (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No locations available
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -215,13 +295,32 @@ const PetitionFilters = ({ activeFilter, onFilterChange }) => {
             {/* Clear Filters */}
             <button
               onClick={clearFilters}
-              className="px-3 py-2 text-sm bg-gray-200 rounded text-gray-600 hover:text-gray-800"
+              className="px-3 py-2 text-sm bg-gray-200 rounded text-gray-600 hover:text-gray-800 transition-colors"
             >
               Clear
             </button>
           </div>
         </div>
       </div>
+
+      {/* Location Filter Info Banner */}
+      {activeFilter.location && activeFilter.location !== 'All Locations' && (
+        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+          <LocationOnIcon className="text-blue-600" sx={{ fontSize: 20 }} />
+          <span className="text-sm text-blue-800">
+            Showing petitions for <strong>{activeFilter.location}</strong>
+            <span className="ml-2 text-blue-600">
+              ({locationCounts[activeFilter.location] || 0} {locationCounts[activeFilter.location] === 1 ? 'petition' : 'petitions'})
+            </span>
+          </span>
+          <button
+            onClick={() => handleSelect('location', 'All Locations')}
+            className="ml-auto text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 };

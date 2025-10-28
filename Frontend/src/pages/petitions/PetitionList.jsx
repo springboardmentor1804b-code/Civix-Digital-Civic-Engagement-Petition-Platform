@@ -111,39 +111,42 @@ const PetitionList = () => {
   useEffect(() => {
     let result = [...petitions];
 
+    // LOCATION FILTER
     if (filters.location !== "All Locations") {
-      result = result.filter((p) => p.location === filters.location);
+      result = result.filter(p => p.location === filters.location);
     }
 
+    // STATUS FILTER - Takes precedence over type filter - FIXED COMPARISON
     if (filters.status !== "All Status") {
-      result = result.filter((p) => p.status === filters.status);
-    }
-
-    if (filters.type === "My Petitions") {
-      result = result.filter((p) => {
-        const creatorId = p.creator?._id || p.creator?.id || p.creator || p.createdBy?._id || p.createdBy?.id || p.createdBy;
-        return String(creatorId) === String(currentUserId);
+      console.log('Filtering by status:', filters.status);
+      console.log('Petitions before filter:', result.length);
+      
+      result = result.filter(p => {
+        // FIXED: Compare status case-insensitively and handle both formats
+        const petitionStatus = p.status.toLowerCase().replace(/_/g, ' ');
+        const filterStatus = filters.status.toLowerCase().replace(/_/g, ' ');
+        
+        const matchesStatus = petitionStatus === filterStatus;
+        
+        console.log('Checking petition:', p.title, 
+                    'petition status:', p.status, 
+                    'normalized:', petitionStatus,
+                    'filter:', filterStatus,
+                    'matches:', matchesStatus);
+        
+        return matchesStatus;
       });
-    } else if (filters.type === "Active Petitions") {
-      result = result.filter((p) => 
-        p.status === "Active" || p.status === "active"
-      );
-    } else if (filters.type === "Closed Petitions") {
-      result = result.filter((p) => 
-        p.status === "Closed" || p.status === "closed" || p.status === "Under Review"
-      );
-    } else if (filters.type === "Petitions I Signed") {
-      result = result.filter((p) => {
-        if (p.userHasSigned === true) return true;
-        if (p.hasSigned === true) return true;
-        if (p.signatures && Array.isArray(p.signatures)) {
-          return p.signatures.some(signature => {
-            const signerId = signature.user?._id || signature.user?.id || signature.user || signature.userId;
-            return String(signerId) === String(currentUserId);
-          });
-        }
-        return false;
-      });
+      
+      console.log('Petitions after filter:', result.length);
+    } else {
+      // TYPE FILTER - Only apply if no status filter is active
+      if (filters.type === "My Petitions") {
+        result = result.filter(p => p.creator?._id === currentUserId);
+      } else if (filters.type === "Petitions I Signed") {
+        result = result.filter(p => p.userHasSigned || p.signedByCurrentUser);
+      } else if (filters.type === "Active Petitions") {
+        result = result.filter(p => p.status.toLowerCase() === "active");
+      }
     }
 
     const sortedResult = sortPetitionsWithHighlight(result);
