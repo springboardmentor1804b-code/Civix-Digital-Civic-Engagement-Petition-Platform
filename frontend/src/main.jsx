@@ -7,31 +7,33 @@ import App from '/src/App.jsx';
 import Home from '/src/components/Home.jsx';
 import Petitions from '/src/components/petitions/Petitions.jsx';
 import Polls from '/src/components/polls/Polls.jsx';
-import Reports from '/src/components/reports/Reports.jsx'; // NEW: Import Reports
-import Settings from '/src/components/settings/Settings.jsx'; // ADDED
-import HelpAndSupport from '/src/components/help/HelpAndSupport.jsx'; // ADDED
+import Reports from '/src/components/reports/Reports.jsx';
+import Settings from '/src/components/settings/Settings.jsx';
+import Officials from '/src/components/officials/Officials.jsx'; // ✅ Make sure this import is correct
+import HelpAndSupport from '/src/components/help/HelpAndSupport.jsx';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AuthProvider } from '/src/context/AuthContext.jsx';
 
 const router = createBrowserRouter([
-    {
-        path: '/',
-        element: <App />,
-        children: [
-            { path: '', element: <Home /> },
-            { path: 'petitions', element: <Petitions /> },
-            { path: 'polls', element: <Polls /> },
-            { path: 'reports', element: <Reports /> }, // NEW: Add the route for Reports
-            { path: 'settings', element: <Settings /> }, // ADDED
-            { path: 'help-support', element: <HelpAndSupport /> }, // ADDED
-        ],
-    },
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      { path: '', element: <Home /> },
+      { path: 'petitions', element: <Petitions /> },
+      { path: 'polls', element: <Polls /> },
+      { path: 'reports', element: <Reports /> },
+      { path: 'settings', element: <Settings /> },
+      { path: 'help-support', element: <HelpAndSupport /> },
+      { path: 'officials', element: <Officials /> }, // ✅ ADD THIS ROUTE
+    ],
+  },
 ]);
 
 createRoot(document.getElementById('root')).render(
-    <StrictMode>
-        <AuthProvider>
-            <RouterProvider router={router} />
-        </AuthProvider>
-    </StrictMode>
+  <StrictMode>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  </StrictMode>
 );

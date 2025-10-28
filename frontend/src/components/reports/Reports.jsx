@@ -11,11 +11,10 @@ const API_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001') + 
 const useReportData = () => {
     const { token } = useAuth();
     const [communityData, setCommunityData] = useState(null);
-    const [myActivityData, setMyActivityData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Function to fetch both community and user activity reports
+    // Function to fetch community report
     const fetchData = useCallback(async () => {
         if (!token) {
             setLoading(false);
@@ -35,17 +34,6 @@ const useReportData = () => {
                 throw new Error(communityJson.msg || 'Failed to fetch community report.');
             }
 
-            // Fetch My Activity Data
-            const myActivityResponse = await fetch(`${API_URL}/my-activity`, {
-                headers: { 'x-auth-token': token }
-            });
-            const myActivityJson = await myActivityResponse.json();
-            if (myActivityResponse.ok) {
-                setMyActivityData(myActivityJson);
-            } else {
-                throw new Error(myActivityJson.msg || 'Failed to fetch my activity report.');
-            }
-
         } catch (err) {
             console.error("Report Fetch Error:", err.message);
             setError(err.message);
@@ -58,7 +46,7 @@ const useReportData = () => {
         fetchData();
     }, [fetchData]);
 
-    return { communityData, myActivityData, loading, error, refreshData: fetchData };
+    return { communityData, loading, error, refreshData: fetchData };
 };
 
 // Component to render a simple analytic card (used for metrics)
@@ -74,8 +62,7 @@ const MetricCard = ({ title, value, iconClass, color }) => (
 
 
 function Reports() {
-    const { communityData, myActivityData, loading, error, refreshData } = useReportData();
-    const [activeTab, setActiveTab] = useState('community');
+    const { communityData, loading, error, refreshData } = useReportData();
 
     if (loading) {
         return <div className="pt-20 p-4 min-h-screen bg-gradient-to-b from-sky-200 to-gray-300 md:pl-54 text-center text-gray-700 font-bold">Loading Reports...</div>;
@@ -187,24 +174,10 @@ function Reports() {
             {/* Main Content Container */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
 
-                {/* Tabs for Community vs My Activity */}
-                <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg w-full sm:w-auto mb-6">
-                    <button
-                        onClick={() => setActiveTab('community')}
-                        className={`cursor-pointer py-2 px-4 rounded-md font-semibold text-sm flex-1 text-center ${activeTab === 'community' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:text-black'}`}>
-                        Community Overview
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('my')}
-                        className={`cursor-pointer py-2 px-4 rounded-md font-semibold text-sm flex-1 text-center ${activeTab === 'my' ? 'bg-white shadow text-orange-600' : 'text-gray-600 hover:text-black'}`}>
-                        My Activity
-                    </button>
-                </div>
-
-                {/* Content for Community Overview */}
-                {activeTab === 'community' && comm && (
+                {/* Community Overview Section */}
+                {comm && (
                     <div className='space-y-6'>
-                         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
                             <MetricCard
                                 title="Total Petitions"
                                 value={comm.totalPetitions}
@@ -254,36 +227,6 @@ function Reports() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Content for My Activity */}
-                {activeTab === 'my' && myActivityData && (
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
-                        <MetricCard
-                            title="Petitions Authored"
-                            value={myActivityData.petitionsAuthored}
-                            iconClass="fa-solid fa-pen-to-square"
-                            color="#f97316"
-                        />
-                        <MetricCard
-                            title="Petitions Signed"
-                            value={myActivityData.petitionsSigned}
-                            iconClass="fa-solid fa-signature"
-                            color="#65a30d"
-                        />
-                        <MetricCard
-                            title="Polls Created"
-                            value={myActivityData.pollsCreated}
-                            iconClass="fa-solid fa-square-poll-horizontal"
-                            color="#06b6d4"
-                        />
-                        <MetricCard
-                            title="Polls Voted In"
-                            value={myActivityData.pollsVotedIn}
-                            iconClass="fa-solid fa-check-to-slot"
-                            color="#c026d3"
-                        />
                     </div>
                 )}
 

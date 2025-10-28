@@ -13,7 +13,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="flex flex-wrap justify-between items-center mx-auto bg-gray-100 p-3 shadow-md fixed w-full h-17 z-50">
+            <header className="flex flex-wrap justify-between items-center mx-auto bg-gray-100 p-3 shadow-md fixed w-full h-17">
                 <div className='flex'>
                     <button
                         className="block text-2xl border rounded-xl hover:text-orange-700 mr-3 md:hidden px-1.5 cursor-pointer"
@@ -26,7 +26,7 @@ export default function Header() {
                     </Link>
                 </div>
 
-                <div className="hidden md:flex flex-grow justify-center font-bold text-md">
+                <div className="hidden md:flex flex-row w-1/2 font-bold text-md ">
                     <NavLink
                         to="/"
                         className={({ isActive }) =>
@@ -56,7 +56,7 @@ export default function Header() {
                         Reports
                     </NavLink>
                     <NavLink
-                        to="/Oficials"
+                        to="/Officials"
                         className={({ isActive }) =>
                             `py-2 pr-4 pl-3 ${isActive ? "text-orange-500 border-b-3" : "text-gray-700"} hover:text-orange-700`
                         }>
@@ -67,7 +67,7 @@ export default function Header() {
                 <Sidebar navClick={navClick} setNavClick={setNavClick} />
 
                 <div className="flex items-end justify-end ">
-                    <NavLink to="/settings" className='h-7 mr-2'> {/* UPDATED LINK */}
+                    <NavLink to="/Sitting" className='h-7 mr-2'>
                         <i className="fa-solid fa-gear fa-lg"></i>
                     </NavLink>
                     <div className='mr-1 cursor-pointer'>

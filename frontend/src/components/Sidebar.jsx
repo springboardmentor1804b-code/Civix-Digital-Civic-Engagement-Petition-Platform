@@ -46,7 +46,7 @@ function Sidebar({ navClick, setNavClick }) {
                     Reports
                 </NavLink>
                 <NavLink
-                    to="/Oficials"
+                    to="/Officials"
                     className={({ isActive }) =>
                         `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
                         hover:text-orange-700 hover:shadow-2xl`}
@@ -55,16 +55,16 @@ function Sidebar({ navClick, setNavClick }) {
                     Officials</NavLink>
                 <div className="mt-auto">
                     <NavLink
-                        to="/settings" // UPDATED
+                        to="/Sitting"
                         className={({ isActive }) =>
                             `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
                         hover:text-orange-700 hover:shadow-2xl`}
                         onClick={() => setNavClick(false)}
                     >
                         <i className="fa-solid fa-gear mr-2"></i>
-                        Settings</NavLink> {/* UPDATED */}
+                        Sitting</NavLink>
                     <NavLink
-                        to="/help-support" // UPDATED
+                        to="/Help_&_Support"
                         className={({ isActive }) =>
                             `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
                         hover:text-orange-700 hover:shadow-2xl`}

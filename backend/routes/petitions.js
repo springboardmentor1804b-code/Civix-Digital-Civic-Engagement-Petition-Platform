@@ -8,7 +8,10 @@ const {
     updatePetition,
     deletePetition,
     updatePetitionStatus,
-    addComment // Import new controller
+    addComment,
+    addVoteToComment,
+    replyToComment
+    // Import new controller
 } = require('../controllers/petitionController');
 
 // @route   GET api/petitions
@@ -45,6 +48,15 @@ router.put('/:id/status', auth, updatePetitionStatus);
 // @desc    Add a comment to a petition
 // @access  Private
 router.post('/:id/comment', auth, addComment);
+
+// @route   POST api/petitions/:id/comment/vote
+// @desc    Vote on a comment
+// @access  Private
+router.post('/:id/comment/vote', auth, addVoteToComment);
+
+// @route Post api/petitions/:id/comment/reply
+// @desc Reply to a comment
+router.post('/:id/comment/reply', auth, replyToComment);
 
 
 module.exports = router;
