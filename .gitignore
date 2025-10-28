@@ -1,0 +1,45 @@
+Frontend/.env
+Backend/.env
+node_modules
+Frontend/node_modules
+Backend/node_modules
+
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+jspm_packages/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build output
+dist/
+build/
+.cache/
+.next/
+out/
+coverage/
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Misc
+*.tsbuildinfo
+# .gitignore
+node_modules/
+.env

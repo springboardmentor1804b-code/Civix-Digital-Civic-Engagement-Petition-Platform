@@ -110,9 +110,9 @@ function Home() {
             </div>
             {/* Containers below heading */}
             <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-0" style={{paddingTop: 80, paddingBottom: 80}}>
-                <div className="flex flex-col lg:flex-row gap-8 lg:h-[400px]">
+                <div className="flex flex-col lg:flex-row gap-8 lg:h-[300px]">
                     {/* Container 1 */}
-                    <div className="flex-1 bg-blue-700 rounded-xl flex flex-col justify-center items-center p-6 sm:p-8 min-h-[300px] lg:min-h-0" style={{boxShadow: '0 8px 32px 0 rgba(17,37,84,0.25)'}}>
+                    <div className="flex-1 bg-blue-700 rounded-xl flex flex-col justify-center items-center p-6 sm:p-8 min-h-[200px] lg:min-h-0" style={{boxShadow: '0 8px 32px 0 rgba(17,37,84,0.25)'}}>
                         <EditIcon sx={{ fontSize: { xs: 40, sm: 48 }, color: 'white', mb: 2 }} />
                         <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 text-center">Create and Sign Petitions</h2>
                         <p className="text-white text-center text-sm sm:text-base max-w-xs">
@@ -121,7 +121,7 @@ function Home() {
                     </div>
                     
                     {/* Container 2 */}
-                    <div className="flex-1 bg-blue-700 rounded-xl flex flex-col justify-center items-center p-6 sm:p-8 min-h-[300px] lg:min-h-0" style={{boxShadow: '0 8px 32px 0 rgba(17,37,84,0.25)'}}>
+                    <div className="flex-1 bg-blue-700 rounded-xl flex flex-col justify-center items-center p-6 sm:p-8 min-h-[200px] lg:min-h-0" style={{boxShadow: '0 8px 32px 0 rgba(17,37,84,0.25)'}}>
                         <HowToVoteIcon sx={{ fontSize: { xs: 40, sm: 48 }, color: 'white', mb: 2 }} />
                         <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 text-center">Participate in Public Polls</h2>
                         <p className="text-white text-center text-sm sm:text-base max-w-xs">
@@ -130,7 +130,7 @@ function Home() {
                     </div>
                     
                     {/* Container 3 */}
-                    <div className="flex-1 bg-blue-700 rounded-xl flex flex-col justify-center items-center p-6 sm:p-8 min-h-[300px] lg:min-h-0" style={{boxShadow: '0 8px 32px 0 rgba(17,37,84,0.25)'}}>
+                    <div className="flex-1 bg-blue-700 rounded-xl flex flex-col justify-center items-center p-6 sm:p-8 min-h-[200px] lg:min-h-0" style={{boxShadow: '0 8px 32px 0 rgba(17,37,84,0.25)'}}>
                         <CheckCircleIcon sx={{ fontSize: { xs: 40, sm: 48 }, color: 'white', mb: 2 }} />
                         <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 text-center">Track Official Responses</h2>
                         <p className="text-white text-center text-sm sm:text-base max-w-xs">

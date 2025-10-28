@@ -24,15 +24,21 @@ const adminLogSchema = new mongoose.Schema({
   metadata: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
+  },
+  read: {
+    type: Boolean,
+    default: false
   }
 }, {
-  timestamps: true // This automatically adds createdAt and updatedAt
+  timestamps: true
 });
 
 // Index for faster queries
 adminLogSchema.index({ user_id: 1, createdAt: -1 });
 adminLogSchema.index({ relatedPetition: 1 });
 adminLogSchema.index({ relatedPoll: 1 });
+adminLogSchema.index({ read: 1 });
+adminLogSchema.index({ createdAt: -1 });
 
 // Virtual for timestamp (alias for createdAt)
 adminLogSchema.virtual('timestamp').get(function() {

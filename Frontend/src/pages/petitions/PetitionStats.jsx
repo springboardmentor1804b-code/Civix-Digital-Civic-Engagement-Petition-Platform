@@ -101,7 +101,6 @@ const PetitionStats = ({ onCreatePetition }) => {
     { 
       title: "My Petitions", 
       count: myPetitionsCount, 
-      link: "View My Petitions",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
@@ -110,7 +109,6 @@ const PetitionStats = ({ onCreatePetition }) => {
     { 
       title: "Signed Petitions", 
       count: signedPetitionsCount, 
-      link: "View Signed",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
@@ -119,20 +117,18 @@ const PetitionStats = ({ onCreatePetition }) => {
     { 
       title: "Active Petitions", 
       count: activePetitionsCount, 
-      link: "Browse Active",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
       description: "Currently collecting signatures"
     },
     { 
-      title: "Successful Petitions", 
+      title: "Closed Petitions", 
       count: successfulPetitionsCount, 
-      link: "View Success Stories",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
-      description: "Completed or under review"
+      description: "Closed or under review"
     },
   ];
 
@@ -191,13 +187,10 @@ const PetitionStats = ({ onCreatePetition }) => {
               </span>
             </div>
             
-            <p className="text-xs text-gray-600 mb-3 leading-tight">
+            <p className="text-xs text-gray-600  leading-tight">
               {stat.description}
             </p>
             
-            <button className={`${stat.color} hover:opacity-80 text-xs font-medium transition-colors`}>
-              {stat.link} →
-            </button>
           </div>
         ))}
 
