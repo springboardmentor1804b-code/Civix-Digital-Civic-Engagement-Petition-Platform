@@ -10,6 +10,7 @@ const {
     changePassword,     // IMPORTED
     deleteUser          // IMPORTED
 } = require('../controllers/auth');
+const { getNotifications, markAsRead } = require('../controllers/NotificationController');
 
 // @route   POST api/auth/register
 // @desc    Register a user
@@ -45,6 +46,16 @@ router.delete('/user', auth, deleteUser); // ADDED
 // @desc    Get polls created by logged in user
 // @access  Private
 router.get('/user/polls', auth, getUserPolls);
+
+// @route   GET api/auth/notifications
+// @desc    Get all notifications for logged in user
+// @access  Private
+router.get('/notifications', auth, getNotifications);
+
+// @route   PATCH api/auth/notifications/:id/read
+// @desc    Mark a notification as read
+// @access  Private
+router.patch('/notifications/:id/read', auth, markAsRead);
 
 
 module.exports = router;

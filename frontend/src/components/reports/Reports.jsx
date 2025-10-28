@@ -225,6 +225,26 @@ function Reports() {
                             />
                         </div>
 
+                        {/* --- Monthly Summary --- */}
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-700 mb-4">Monthly Summary</h2>
+                             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8'>
+                                <MetricCard
+                                    title="Petitions This Month"
+                                    value={comm.petitionsThisMonth}
+                                    iconClass="fa-solid fa-calendar-plus"
+                                    color="#06b6d4" 
+                                />
+                                <MetricCard
+                                    title="Polls This Month"
+                                    value={comm.pollsThisMonth}
+                                    iconClass="fa-solid fa-calendar-plus"
+                                    color="#8b5cf6"
+                                />
+                            </div>
+                        </div>
+
+
                         {/* Petition Analytics */}
                         <div>
                             <h2 className="text-xl font-bold text-gray-700 mb-4">Petition Analytics</h2>

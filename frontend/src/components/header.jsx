@@ -2,14 +2,53 @@
 
 import { Link, NavLink } from 'react-router-dom';
 import govt_img from '../assets/govt.png';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 
 export default function Header() {
     const [navClick, setNavClick] = useState(false);
     const [userIconClick, setuserIconClick] = useState(false);
-    const { user, logout } = useAuth();
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const { user, logout, token } = useAuth();
+
+    const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+
+    // Fetch notifications
+    useEffect(() => {
+        const loadNotifications = async () => {
+            if (user) {
+                try {
+                    const response = await fetch(`${API_URL}/api/auth/notifications`,
+                        { headers: { 'x-auth-token': token } })
+                    if (!response.ok) throw new Error('Failed to fetch notifications');
+                    const data = await response.json();
+                    setNotifications(data);
+                } catch (error) {
+                    console.error('Error fetching notifications:', error);
+                }
+            };
+        }
+        loadNotifications();
+    }, [user, API_URL, token]);
+
+    const unreadCount = notifications.filter(n => !n.isRead).length; 
+
+    // Mark single notification as read
+    const markAsRead = async (id) => {
+        try {
+            await fetch(`${API_URL}/api/auth/notifications/${id}/read`,{
+                    method: 'PATCH',
+                    headers: { 'x-auth-token': token }
+                 });
+            setNotifications(prev =>
+                prev.map(n => n._id === id ? { ...n, isRead: true } : n)
+            );
+        } catch (error) {
+            console.warn('Mark as read failed :',error);
+        }
+    };
 
     return (
         <>
@@ -66,12 +105,41 @@ export default function Header() {
 
                 <Sidebar navClick={navClick} setNavClick={setNavClick} />
 
-                <div className="flex items-end justify-end ">
-                    <NavLink to="/settings" className='h-7 mr-2'> {/* UPDATED LINK */}
+                <div className="flex items-center justify-end ">
+                    <NavLink to="/settings" className='h-6 mr-2'> {/* UPDATED LINK */}
                         <i className="fa-solid fa-gear fa-lg"></i>
                     </NavLink>
-                    <div className='mr-1 cursor-pointer'>
-                        <img src='https://cdn-icons-png.flaticon.com/512/565/565422.png' className="mr-1 h-7" alt="Logo " />
+                    <div className='mr-2 cursor-pointer'>
+                        <button onClick={() => setNotifOpen(!notifOpen)} className="relative cursor-pointer">
+                            <i className="fa-solid fa-bell fa-xl"></i>
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {notifOpen && (
+                            <div className="absolute right-0 mt-6 bg-white border rounded shadow-lg min-[400px]:w-80 z-50 max-h-96 overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <p className="p-3 text-gray-500 text-sm">No notifications</p>
+                                ) : (
+                                    notifications.map(n => (
+                                        <div
+                                            key={n._id}
+                                            onClick={() => markAsRead(n._id)}
+                                            className={`p-3 border-b hover:bg-gray-100 cursor-pointer ${n.isRead ? 'text-gray-500' : 'text-black font-medium'
+                                                }`}
+                                        >
+                                            {n.message}
+                                            <div className="text-xs text-gray-400">
+                                                {new Date(n.createdAt).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
                     </div>
                     <button onClick={() => setuserIconClick(!userIconClick)}
                         className="text-gray-800 font-bold border rounded-4xl text-sm p-2 px-2.5 cursor-pointer">
