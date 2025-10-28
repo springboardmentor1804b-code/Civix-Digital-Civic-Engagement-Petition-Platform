@@ -13,7 +13,8 @@ import {
   verifyPetition,
   addOfficialResponse,
   getPetitionsForReview,
-  getOfficialResponses
+  getOfficialResponses,
+  searchPetitions
 } from "../controllers/petitionController.js";
 import { auth, requireAuth } from "../middleware/auth.js";
 
@@ -26,6 +27,7 @@ router.get("/review/list", auth, requireAuth, getPetitionsForReview);
 
 // Public routes (with optional auth)
 router.get("/", auth, getAllPetitions);
+router.get("/search", auth, searchPetitions); // Added search route
 
 // Protected routes (require auth) - FIXED: Added auth middleware before requireAuth
 router.post("/", auth, requireAuth, createPetition);

@@ -1,5 +1,6 @@
 // src/services/pollService.js
 import axios from "axios";
+import api from './api'; // Add this import
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const DEFAULT_CONFIG = { withCredentials: true };
@@ -38,17 +39,20 @@ export async function createPoll(pollData) {
   }
 }
 
-// Vote on a poll (returns updated poll)
-export async function votePoll(pollId, option) {
+// Vote on a poll
+export const votePoll = async (pollId, optionIndex) => {
   try {
-    const body = option !== undefined ? { option } : {};
-    const res = await axios.post(`${API_URL}/polls/${pollId}/vote`, body, DEFAULT_CONFIG);
-    return res.data.poll || res.data;
-  } catch (err) {
-    console.error("Error voting on poll:", err);
-    throw err;
+    const response = await api.post(`/polls/${pollId}/vote`, {
+      option: Number(optionIndex)
+    });
+    console.log("Vote response data:", response.data);
+    return response.data.poll || response.data;
+  } catch (error) {
+    console.error("Error voting on poll:", error);
+    console.error("Error details:", error.response?.data);
+    throw error;
   }
-}
+};
 
 // Delete a poll (only creator)
 export async function deletePoll(pollId) {

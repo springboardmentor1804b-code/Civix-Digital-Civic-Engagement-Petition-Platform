@@ -9,7 +9,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import BusinessIcon from "@mui/icons-material/Business";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import ReportIcon from "@mui/icons-material/Report";
-import SettingsIcon from "@mui/icons-material/Settings";
 import HelpIcon from "@mui/icons-material/Help";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 
@@ -31,10 +30,9 @@ export default function DashboardBar() {
     { to: "/dashboard/analytics", label: "Analytics", icon: <AnalyticsIcon /> },
   ];
 
-  // Common links for all users
+  // Common links for all users (Settings removed)
   const commonLinks = [
     { to: "/dashboard/reports", label: "Reports", icon: <ReportIcon /> },
-    { to: "/dashboard/settings", label: "Settings", icon: <SettingsIcon /> },
     { to: "/dashboard/help", label: "Help & Support", icon: <HelpIcon /> },
   ];
 
@@ -46,7 +44,7 @@ export default function DashboardBar() {
   ];
 
   return (
-    <nav className="w-full mt-6">
+    <nav className="w-full ">
       {links.map((link) => (
         <Tooltip 
           key={link.to}

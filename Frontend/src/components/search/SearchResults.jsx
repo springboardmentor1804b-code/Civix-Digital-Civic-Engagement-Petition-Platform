@@ -78,7 +78,7 @@ const SearchResults = ({ results, searchQuery, onClose, onItemClick }) => {
             {searchQuery ? `No results found for "${searchQuery}"` : 'Start typing to search...'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Search across polls, petitions, and reports
+            Search across polls and petitions
           </Typography>
         </Box>
       </Paper>

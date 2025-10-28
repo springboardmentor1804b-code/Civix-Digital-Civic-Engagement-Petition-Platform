@@ -3,10 +3,8 @@ import { useNavigate } from "react-router-dom";
 import petitionService from "../../services/petitionService";
 import { getCurrentUserId, isAuthenticated } from "../../utils/auth";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PeopleIcon from '@mui/icons-material/People';
-import EventIcon from '@mui/icons-material/Event';
+import CommentIcon from '@mui/icons-material/Comment';
+import CommentsModal from './CommentsModal';
 
 const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
   const navigate = useNavigate();
@@ -15,10 +13,20 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
   const [loading, setLoading] = useState(false);
   const [checkingSignature, setCheckingSignature] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [localCommentCount, setLocalCommentCount] = useState(0);
   
   const currentUserId = getCurrentUserId();
   const userIsAuthenticated = isAuthenticated();
   const isCreator = petition.creator?._id === currentUserId;
+  
+  // ✅ NEW: Check if petition is closed
+  const isClosed = ['closed', 'Closed', 'successful', 'Successful', 'rejected', 'Rejected', 'expired', 'Expired'].includes(petition.status);
+
+  // Initialize comment count
+  useEffect(() => {
+    setLocalCommentCount(petition.commentsCount || petition.comments?.length || 0);
+  }, [petition]);
 
   // Check if mobile screen
   useEffect(() => {
@@ -83,6 +91,11 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
       return;
     }
 
+    // ✅ NEW: Prevent signing closed petitions
+    if (isClosed) {
+      return;
+    }
+
     try {
       setLoading(true);
       const result = await petitionService.signPetition(petition._id);
@@ -131,6 +144,23 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
     });
   };
 
+  const handleViewComments = (e) => {
+    e.stopPropagation();
+    setShowCommentsModal(true);
+  };
+
+  const handleCommentAdded = (newCount) => {
+    setLocalCommentCount(newCount);
+    // Update parent if needed
+    if (onSigned) {
+      onSigned(petition._id, {
+        signed,
+        signaturesCount,
+        commentsCount: newCount
+      });
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Active": return "bg-green-100 text-green-800";
@@ -173,9 +203,10 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow ${
-      isGridView ? 'p-4 h-full flex flex-col' : 'p-6 mb-4'
-    }`}>
+    <>
+      <div className={`bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow ${
+        isGridView ? 'p-4 h-full flex flex-col' : 'p-6 mb-4'
+      }`}>
       
       {/* Header */}
       <div className={`flex justify-between items-start ${isGridView ? 'mb-3' : 'mb-3'}`}>
@@ -183,6 +214,13 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
           <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${getStatusColor(petition.status)}`}>
             {petition.status === 'active' ? 'Active' : petition.status}
           </span>
+          
+          {/* ✅ NEW: Show "Closed" badge for closed petitions */
+          isClosed && (
+            <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800 border border-gray-300">
+              Signing Closed
+            </span>
+          )}
           
           {/* Edit/Delete buttons for creator */}
           {isCreator && userIsAuthenticated && (
@@ -280,35 +318,55 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
                 </span>
               </div>
               
-              {/* Location */}
-              <div className="flex items-center">
-                <LocationOnIcon className="text-blue-600 mr-1" style={{ fontSize: '14px' }} />
-                <span className="text-xs text-blue-900 truncate">
-                  {petition.location || 'Not specified'}
-                </span>
+              {/* Location and Comments */}
+              <div className="flex items-center justify-between gap-2">
+                {/* Location */}
+                <div className="flex items-center flex-1 min-w-0">
+                  <LocationOnIcon className="text-blue-600 mr-1 flex-shrink-0" style={{ fontSize: '14px' }} />
+                  <span className="text-xs text-blue-900 truncate">
+                    {petition.location || 'Not specified'}
+                  </span>
+                </div>
+                
+                {/* Comments Button */}
+                <button
+                  onClick={handleViewComments}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
+                  title="View comments"
+                >
+                  <CommentIcon className="text-gray-600" style={{ fontSize: '14px' }} />
+                  <span className="text-xs font-medium text-gray-700">
+                    {localCommentCount}
+                  </span>
+                </button>
               </div>
             </div>
 
-            {/* Sign Button for Grid View */}
+            {/* Sign Button for Grid View - ✅ UPDATED */}
             <button
               onClick={handleSign}
-              disabled={signed || loading || isCreator || !userIsAuthenticated}
+              disabled={signed || loading || isCreator || !userIsAuthenticated || isClosed}
               className={`w-full px-3 py-2 text-white rounded-md text-sm font-medium transition-all duration-200 ${
                 !userIsAuthenticated
                   ? "bg-gray-400 cursor-not-allowed"
                   : isCreator
                   ? "bg-gray-400 cursor-not-allowed"
+                  : isClosed
+                  ? "bg-gray-500 cursor-not-allowed"
                   : signed 
                   ? "bg-green-500 cursor-default" 
                   : loading
                   ? "bg-gray-400 cursor-wait"
                   : "bg-blue-600 hover:bg-blue-700 active:scale-95"
               }`}
+              title={isClosed ? "This petition is closed and no longer accepting signatures" : ""}
             >
               {!userIsAuthenticated ? (
                 "Login to Sign"
               ) : isCreator ? (
                 "Your Petition"
+              ) : isClosed ? (
+                "Petition Closed"
               ) : loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -322,7 +380,7 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
             </button>
           </div>
         ) : (
-          // List View Footer - Desktop only
+          // List View Footer - Desktop only - ✅ UPDATED
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <span className="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">
@@ -343,28 +401,45 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
                   </p>
                 </div>
               </div>
+
+              {/* Comments Button - Desktop */}
+              <button
+                onClick={handleViewComments}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                title="View comments"
+              >
+                <CommentIcon className="text-gray-600" style={{ fontSize: '18px' }} />
+                <span className="text-sm font-medium text-gray-700">
+                  {localCommentCount} {localCommentCount === 1 ? 'Comment' : 'Comments'}
+                </span>
+              </button>
             </div>
 
-            {/* Sign button */}
+            {/* Sign button - ✅ UPDATED */}
             <button
               onClick={handleSign}
-              disabled={signed || loading || isCreator || !userIsAuthenticated}
+              disabled={signed || loading || isCreator || !userIsAuthenticated || isClosed}
               className={`px-4 py-2 rounded-md text-white font-medium transition-all duration-200 ${
                 !userIsAuthenticated
                   ? "bg-gray-400 cursor-not-allowed"
                   : isCreator
                   ? "bg-gray-400 cursor-not-allowed"
+                  : isClosed
+                  ? "bg-gray-500 cursor-not-allowed"
                   : signed 
                   ? "bg-green-500 cursor-default" 
                   : loading
                   ? "bg-gray-400 cursor-wait"
                   : "bg-blue-600 hover:bg-blue-700 active:scale-95"
               }`}
+              title={isClosed ? "This petition is closed and no longer accepting signatures" : ""}
             >
               {!userIsAuthenticated ? (
                 "Login to Sign"
               ) : isCreator ? (
                 "Your Petition"
+              ) : isClosed ? (
+                "Petition Closed"
               ) : loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -380,6 +455,15 @@ const PetitionCard = ({ petition, onSigned, viewMode = "List View" }) => {
         )}
       </div>
     </div>
+
+    {/* Comments Modal */}
+    <CommentsModal
+      petition={petition}
+      isOpen={showCommentsModal}
+      onClose={() => setShowCommentsModal(false)}
+      onCommentAdded={handleCommentAdded}
+    />
+    </>
   );
 };
 
