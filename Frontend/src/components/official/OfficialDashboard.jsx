@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
-  PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer 
+  PieChart, Pie, Cell, ResponsiveContainer 
 } from 'recharts';
 import {
   CheckCircle,
@@ -14,7 +14,10 @@ import {
   Task,
   CheckBox,
   Cancel,
-  Refresh
+  Refresh,
+  Assessment,
+  TrendingUp,
+  TimelineOutlined
 } from '@mui/icons-material';
 import officialService from '../../services/officialService';
 
@@ -27,6 +30,9 @@ const OfficialDashboard = () => {
   // Location filter state
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [availableLocations, setAvailableLocations] = useState([]);
+  
+  // Status filter state
+  const [selectedStatus, setSelectedStatus] = useState('all');
   
   // DYNAMIC COUNTS STATE - Like PetitionStats
   const [totalPetitionsCount, setTotalPetitionsCount] = useState(0);
@@ -46,10 +52,10 @@ const OfficialDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter petitions when location changes
+  // Filter petitions when location or status changes
   useEffect(() => {
-    filterPetitionsByLocation();
-  }, [selectedLocation, allPetitions]);
+    filterPetitions();
+  }, [selectedLocation, selectedStatus, allPetitions]);
 
   const fetchAnalytics = async () => {
     try {
@@ -74,7 +80,8 @@ const OfficialDashboard = () => {
 
   const fetchPetitionsToReview = async () => {
     try {
-      const response = await officialService.getPetitionsForReview({ status: 'active' });
+      // Fetch all petitions without status filter
+      const response = await officialService.getPetitionsForReview({});
       const petitions = response.petitions || [];
       
       // Store all petitions
@@ -86,6 +93,20 @@ const OfficialDashboard = () => {
       
       // Initially show all petitions
       setPetitionsToReview(petitions);
+      
+      // DEBUG: Log all unique statuses in the database
+      const uniqueStatuses = [...new Set(petitions.map(p => p.status))];
+      console.log('=== PETITION STATUS DEBUG ===');
+      console.log('All unique statuses:', uniqueStatuses);
+      console.log('Total petitions fetched:', petitions.length);
+      console.log('Petition status breakdown:', {
+        active: petitions.filter(p => p.status === 'active').length,
+        under_review: petitions.filter(p => p.status === 'under_review').length,
+        closed: petitions.filter(p => p.status === 'closed').length,
+        // REMOVED: in_progress and successful from debug
+      });
+      console.log('Sample petition:', petitions[0]);
+      console.log('=========================');
     } catch (error) {
       console.error('Error fetching petitions to review:', error);
     } finally {
@@ -93,17 +114,48 @@ const OfficialDashboard = () => {
     }
   };
 
-  const filterPetitionsByLocation = () => {
-    if (selectedLocation === 'all') {
-      setPetitionsToReview(allPetitions);
-    } else {
-      const filtered = allPetitions.filter(p => p.location === selectedLocation);
-      setPetitionsToReview(filtered);
+  const filterPetitions = () => {
+    let filtered = allPetitions;
+
+    // Filter by status - SIMPLIFIED to only handle active, under_review, and closed
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter(p => {
+        if (selectedStatus === 'active') {
+          return p.status === 'active';
+        } else if (selectedStatus === 'under_review') {
+          // Only under_review status
+          return p.status === 'under_review';
+        } else if (selectedStatus === 'closed') {
+          // Only closed status
+          return p.status === 'closed';
+        }
+        return true;
+      });
     }
+
+    // Filter by location
+    if (selectedLocation !== 'all') {
+      filtered = filtered.filter(p => p.location === selectedLocation);
+    }
+
+    setPetitionsToReview(filtered);
+    
+    // DEBUG: Log filtering results
+    console.log('=== FILTER DEBUG ===');
+    console.log('Selected status:', selectedStatus);
+    console.log('Selected location:', selectedLocation);
+    console.log('All petitions count:', allPetitions.length);
+    console.log('Filtered petitions count:', filtered.length);
+    console.log('Filtered petition statuses:', filtered.map(p => p.status));
+    console.log('==================');
   };
 
   const handleLocationChange = (location) => {
     setSelectedLocation(location);
+  };
+
+  const handleStatusFilter = (status) => {
+    setSelectedStatus(status);
   };
 
   const updatePetitionStatus = async (petitionId, status, response) => {
@@ -154,7 +206,7 @@ const OfficialDashboard = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="">
+        <div className="mb-8 text-center sm:text-left mt-[70px] sm:mt-0">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Public Official Dashboard</h1>
@@ -197,59 +249,248 @@ const OfficialDashboard = () => {
             </div>
           </div>
 
-          {/* Location Filter Info */}
-          {selectedLocation !== 'all' && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-              <LocationOn className="text-blue-600" fontSize="small" />
-              <span className="text-sm text-blue-800">
-                Showing petitions for <strong>{selectedLocation}</strong> 
-                <span className="ml-2 text-blue-600">
-                  ({petitionsToReview.length} {petitionsToReview.length === 1 ? 'petition' : 'petitions'})
-                </span>
-              </span>
+          {/* Active Filters Info */}
+          {(selectedLocation !== 'all' || selectedStatus !== 'all') && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <LocationOn className="text-blue-600" fontSize="small" />
+                  <span className="text-sm text-blue-800">
+                    <strong>Active Filters:</strong>
+                  </span>
+                  {selectedStatus !== 'all' && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      Status: {selectedStatus === 'under_review' ? 'Under Review' : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+                    </span>
+                  )}
+                  {selectedLocation !== 'all' && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      Location: {selectedLocation}
+                    </span>
+                  )}
+                  <span className="text-blue-600 font-medium">
+                    ({petitionsToReview.length} {petitionsToReview.length === 1 ? 'petition' : 'petitions'})
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedLocation('all');
+                    setSelectedStatus('all');
+                  }}
+                  className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
             </div>
           )}
         </div>
 
-        {/* UPDATED Overview Cards - Using Dynamic Counts */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-blue-50 text-blue-600 border border-blue-200 p-6 rounded-lg shadow transform transition-transform hover:scale-105">
-            <h3 className="text-lg font-semibold">Total Petitions</h3>
-            <p className="text-3xl font-bold mt-2 transition-all duration-500">
-              {totalPetitionsCount}
-            </p>
-            <div className="text-blue-600 text-sm mt-1">
-              System-wide petitions
+        {/* NEW: Petition Status Analytics Section */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Assessment className="text-blue-600" sx={{ fontSize: 28 }} />
+              <h3 className="text-xl font-semibold text-gray-900">Petition Status Overview</h3>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <TimelineOutlined fontSize="small" />
+              <span>Real-time Analytics</span>
             </div>
           </div>
 
-          <div className="bg-yellow-50 text-yellow-600 border border-yellow-200 p-6 rounded-lg shadow transform transition-transform hover:scale-105">
-            <h3 className="text-lg font-semibold">Under Review</h3>
-            <p className="text-3xl font-bold mt-2 transition-all duration-500">
-              {reviewedPetitionsCount}
-            </p>
-            <div className="text-yellow-600 text-sm mt-1">
-              Awaiting official response
+          {/* Visual Statistics Grid - NOW CLICKABLE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Total Petitions Card - Clickable */}
+            <button
+              onClick={() => handleStatusFilter(selectedStatus === 'all' ? 'all' : 'all')}
+              className={`text-left bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-l-4 border-blue-500 transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
+                selectedStatus === 'all' ? 'ring-2 ring-blue-400 shadow-lg' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-blue-900">Total Petitions</h4>
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <Assessment className="text-white" fontSize="small" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-blue-900">{totalPetitionsCount}</p>
+              <p className="text-xs text-blue-700 mt-1">
+                {selectedStatus === 'all' ? '✓ Currently viewing' : 'Click to view all'}
+              </p>
+            </button>
+
+            {/* Active Petitions Card - Clickable */}
+            <button
+              onClick={() => handleStatusFilter(selectedStatus === 'active' ? 'all' : 'active')}
+              className={`text-left bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-l-4 border-green-500 transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
+                selectedStatus === 'active' ? 'ring-2 ring-green-400 shadow-lg' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-green-900">Active Petitions</h4>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <TrendingUp className="text-white" fontSize="small" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-green-900">{activePetitionsCount}</p>
+              <p className="text-xs text-green-700 mt-1">
+                {selectedStatus === 'active' 
+                  ? '✓ Currently viewing' 
+                  : totalPetitionsCount > 0 
+                    ? `${((activePetitionsCount / totalPetitionsCount) * 100).toFixed(1)}% of total`
+                    : 'No active petitions'
+                }
+              </p>
+            </button>
+
+            {/* Under Review Card - Clickable */}
+            <button
+              onClick={() => handleStatusFilter(selectedStatus === 'under_review' ? 'all' : 'under_review')}
+              className={`text-left bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-l-4 border-yellow-500 transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
+                selectedStatus === 'under_review' ? 'ring-2 ring-yellow-400 shadow-lg' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-yellow-900">Under Review</h4>
+                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                  <Task className="text-white" fontSize="small" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-yellow-900">{reviewedPetitionsCount}</p>
+              <p className="text-xs text-yellow-700 mt-1">
+                {selectedStatus === 'under_review' 
+                  ? '✓ Currently viewing' 
+                  : totalPetitionsCount > 0 
+                    ? `${((reviewedPetitionsCount / totalPetitionsCount) * 100).toFixed(1)}% of total`
+                    : 'None under review'
+                }
+              </p>
+            </button>
+
+            {/* Closed Petitions Card - Clickable */}
+            <button
+              onClick={() => handleStatusFilter(selectedStatus === 'closed' ? 'all' : 'closed')}
+              className={`text-left bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-l-4 border-red-500 transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
+                selectedStatus === 'closed' ? 'ring-2 ring-red-400 shadow-lg' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-red-900">Closed Petitions</h4>
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                  <CheckCircle className="text-white" fontSize="small" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-red-900">{closedPetitionsCount}</p>
+              <p className="text-xs text-red-700 mt-1">
+                {selectedStatus === 'closed' 
+                  ? '✓ Currently viewing' 
+                  : totalPetitionsCount > 0 
+                    ? `${((closedPetitionsCount / totalPetitionsCount) * 100).toFixed(1)}% of total`
+                    : 'No closed petitions'
+                }
+              </p>
+            </button>
+          </div>
+
+          {/* Status Distribution Chart */}
+          <div className="mt-6">
+            <h4 className="text-sm font-semibold text-gray-700 mb-4">Status Distribution</h4>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Pie Chart */}
+              <div className="w-full md:w-1/2 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Active', value: activePetitionsCount, color: '#10b981' },
+                        { name: 'Under Review', value: reviewedPetitionsCount, color: '#f59e0b' },
+                        { name: 'Closed', value: closedPetitionsCount, color: '#ef4444' },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'Active', value: activePetitionsCount, color: '#10b981' },
+                        { name: 'Under Review', value: reviewedPetitionsCount, color: '#f59e0b' },
+                        { name: 'Closed', value: closedPetitionsCount, color: '#ef4444' },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Bar Chart */}
+              <div className="w-full md:w-1/2 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      { name: 'Active', count: activePetitionsCount, fill: '#10b981' },
+                      { name: 'Under Review', count: reviewedPetitionsCount, fill: '#f59e0b' },
+                      { name: 'Closed', count: closedPetitionsCount, fill: '#ef4444' },
+                    ]}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8">
+                      {[
+                        { name: 'Active', count: activePetitionsCount, fill: '#10b981' },
+                        { name: 'Under Review', count: reviewedPetitionsCount, fill: '#f59e0b' },
+                        { name: 'Closed', count: closedPetitionsCount, fill: '#ef4444' },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
-          <div className="bg-green-50 text-green-600 border border-green-200 p-6 rounded-lg shadow transform transition-transform hover:scale-105">
-            <h3 className="text-lg font-semibold">Active</h3>
-            <p className="text-3xl font-bold mt-2 transition-all duration-500">
-              {activePetitionsCount}
-            </p>
-            <div className="text-green-600 text-sm mt-1">
-              Currently collecting signatures
-            </div>
-          </div>
-
-          <div className="bg-red-50 text-red-600 border border-red-200 p-6 rounded-lg shadow transform transition-transform hover:scale-105">
-            <h3 className="text-lg font-semibold">Closed</h3>
-            <p className="text-3xl font-bold mt-2 transition-all duration-500">
-              {closedPetitionsCount}
-            </p>
-            <div className="text-red-600 text-sm mt-1">
-              Completed or rejected
+          {/* Quick Stats */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalPetitionsCount > 0 
+                    ? ((activePetitionsCount / totalPetitionsCount) * 100).toFixed(1) 
+                    : 0}%
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Active Rate</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalPetitionsCount > 0 
+                    ? ((reviewedPetitionsCount / totalPetitionsCount) * 100).toFixed(1) 
+                    : 0}%
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Review Rate</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalPetitionsCount > 0 
+                    ? ((closedPetitionsCount / totalPetitionsCount) * 100).toFixed(1) 
+                    : 0}%
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Closure Rate</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {activePetitionsCount + reviewedPetitionsCount}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Needs Attention</p>
+              </div>
             </div>
           </div>
         </div>
@@ -257,11 +498,13 @@ const OfficialDashboard = () => {
         {/* Petitions Requiring Review */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold">Petitions Requiring Review</h3>
+            <h3 className="text-xl font-semibold">
+              {selectedStatus === 'all' && 'All Petitions'}
+              {selectedStatus === 'active' && 'Active Petitions'}
+              {selectedStatus === 'under_review' && 'Petitions Under Review'}
+              {selectedStatus === 'closed' && 'Closed Petitions'}
+            </h3>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500">
-                {petitionsToReview.length} petition(s) pending
-              </span>
               <button
                 onClick={() => {
                   fetchAnalytics();
@@ -288,8 +531,28 @@ const OfficialDashboard = () => {
             ) : (
               <div className="text-center py-12">
                 <CheckCircle sx={{ fontSize: 72, color: '#9CA3AF', mb: 2 }} />
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h4>
-                <p className="text-gray-500">No petitions requiring review at this time.</p>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  {selectedStatus === 'all' ? 'No petitions found' : `No ${selectedStatus.replace('_', ' ')} petitions`}
+                </h4>
+                <p className="text-gray-500">
+                  {selectedLocation !== 'all' 
+                    ? `No petitions match your current filters (${selectedStatus !== 'all' ? selectedStatus.replace('_', ' ') + ' status, ' : ''}${selectedLocation} location).`
+                    : selectedStatus === 'all' 
+                      ? 'There are no petitions in the system yet.'
+                      : `There are no ${selectedStatus.replace('_', ' ')} petitions at this time.`
+                  }
+                </p>
+                {(selectedLocation !== 'all' || selectedStatus !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setSelectedLocation('all');
+                      setSelectedStatus('all');
+                    }}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -353,6 +616,15 @@ const PetitionReviewCard = ({ petition, onStatusUpdate, onVerify }) => {
           <p className="text-gray-600 mb-3">{petition.description}</p>
           
           <div className="flex flex-wrap gap-2 mb-4">
+            {/* Status Badge - SIMPLIFIED */}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              petition.status === 'active' ? 'bg-green-100 text-green-800' :
+              petition.status === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
+              petition.status === 'closed' ? 'bg-red-100 text-red-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              Status: {petition.status === 'under_review' ? 'Under Review' : petition.status.charAt(0).toUpperCase() + petition.status.slice(1)}
+            </span>
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
               {petition.category}
             </span>
@@ -401,7 +673,7 @@ const PetitionReviewCard = ({ petition, onStatusUpdate, onVerify }) => {
         </button>
       </div>
 
-      {/* Review Form */}
+      {/* Review Form - ONLY 2 OPTIONS */}
       {showResponseForm && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <h5 className="font-semibold mb-3">Official Review</h5>
@@ -415,9 +687,7 @@ const PetitionReviewCard = ({ petition, onStatusUpdate, onVerify }) => {
                 disabled={isSubmitting}
               >
                 <option value="under_review">Under Review</option>
-                <option value="in_progress">In Progress</option>
                 <option value="closed">Closed</option>
-                <option value="successful">Successful</option>
               </select>
             </div>
             <div>

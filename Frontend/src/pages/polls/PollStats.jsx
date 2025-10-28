@@ -114,7 +114,6 @@ const PollStats = ({ onCreatePoll, refreshTrigger }) => {
     { 
       title: "My Polls", 
       count: stats.myPolls, 
-      link: "View My Polls",
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
@@ -123,7 +122,6 @@ const PollStats = ({ onCreatePoll, refreshTrigger }) => {
     { 
       title: "Polls I Voted On", 
       count: stats.votedPolls, 
-      link: "View Voted Polls",
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
@@ -132,7 +130,6 @@ const PollStats = ({ onCreatePoll, refreshTrigger }) => {
     { 
       title: "Active Polls", 
       count: stats.activePolls, 
-      link: "Browse Active",
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
@@ -141,7 +138,6 @@ const PollStats = ({ onCreatePoll, refreshTrigger }) => {
     { 
       title: "Closed Polls", 
       count: stats.closedPolls, 
-      link: "View All",
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
@@ -194,13 +190,9 @@ const PollStats = ({ onCreatePoll, refreshTrigger }) => {
               </span>
             </div>
             
-            <p className="text-xs text-gray-600 mb-3 leading-tight">
+            <p className="text-xs text-gray-600 leading-tight">
               {stat.description}
-            </p>
-            
-            <button className={`${stat.color} hover:opacity-80 text-xs font-medium transition-colors`}>
-              {stat.link} →
-            </button>
+            </p>            
           </div>
         ))}
 

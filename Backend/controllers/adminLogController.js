@@ -1,18 +1,27 @@
 import AdminLog from '../models/AdminLog.js';
 import Petition from '../models/Petition.js';
 import Poll from '../models/Poll.js';
+import notificationService from '../services/notificationService.js';
 
 // Create a new admin log entry
 export const createAdminLog = async (req, res) => {
   try {
     const { action, user_id, relatedPetition, relatedPoll, metadata } = req.body;
 
+    if (!action || !user_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Action and user_id are required'
+      });
+    }
+
     const adminLog = new AdminLog({
       action,
       user_id,
       relatedPetition,
       relatedPoll,
-      metadata
+      metadata,
+      read: false
     });
 
     await adminLog.save();
@@ -177,27 +186,152 @@ export const getLogsByPoll = async (req, res) => {
   }
 };
 
-// Get recent admin actions (for dashboard)
-export const getRecentActions = async (req, res) => {
+// Get recent official actions (for dashboard - no auth required)
+export const getRecentOfficialActions = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-
-    const logs = await AdminLog.find()
-      .populate('user_id', 'name email role')
-      .populate('relatedPetition', 'title status')
-      .populate('relatedPoll', 'title status')
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit));
-
-    res.status(200).json({
-      success: true,
-      logs
-    });
+    const { limit = 3 } = req.query;
+    
+    const result = await notificationService.getRecentActions(parseInt(limit));
+    
+    res.status(200).json(result);
   } catch (error) {
-    console.error('Error fetching recent actions:', error);
+    console.error('Error fetching recent official actions:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch recent actions',
+      message: 'Failed to fetch recent official actions',
+      error: error.message
+    });
+  }
+};
+
+// Get all official actions with pagination
+export const getAllOfficialActions = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    
+    const result = await notificationService.getAllOfficialActions(
+      parseInt(page),
+      parseInt(limit)
+    );
+    
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error fetching all official actions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch official actions',
+      error: error.message
+    });
+  }
+};
+
+// Get user notifications
+export const getUserNotifications = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const { page = 1, limit = 20 } = req.query;
+    
+    const result = await notificationService.getUserNotifications(
+      userId,
+      parseInt(page),
+      parseInt(limit)
+    );
+    
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error in getUserNotifications controller:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch notifications',
+      error: error.message
+    });
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id || req.user?._id;
+
+    const notification = await AdminLog.findById(id);
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found'
+      });
+    }
+
+    // Verify user owns this notification
+    if (notification.user_id.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized'
+      });
+    }
+
+    notification.read = true;
+    await notification.save();
+
+    res.json({
+      success: true,
+      message: 'Notification marked as read'
+    });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark notification as read',
+      error: error.message
+    });
+  }
+};
+
+// Mark all notifications as read
+export const markAllNotificationsAsRead = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+
+    // Find user's petitions and polls
+    const [userPetitions, userPolls] = await Promise.all([
+      Petition.find({ creator: userId }).select('_id'),
+      Poll.find({ creator: userId }).select('_id')
+    ]);
+
+    const petitionIds = userPetitions.map(p => p._id);
+    const pollIds = userPolls.map(p => p._id);
+
+    // Update all unread notifications
+    const result = await AdminLog.updateMany(
+      {
+        $or: [
+          { relatedPetition: { $in: petitionIds } },
+          { relatedPoll: { $in: pollIds } }
+        ],
+        read: false
+      },
+      { read: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'All notifications marked as read',
+      count: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark all notifications as read',
       error: error.message
     });
   }
@@ -206,7 +340,7 @@ export const getRecentActions = async (req, res) => {
 // Delete old logs (cleanup utility)
 export const deleteOldLogs = async (req, res) => {
   try {
-    const { daysOld = 365 } = req.body; // Default: delete logs older than 1 year
+    const { daysOld = 365 } = req.body;
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
@@ -238,7 +372,8 @@ export const logAdminAction = async (action, userId, relatedPetitionId = null, r
       user_id: userId,
       relatedPetition: relatedPetitionId,
       relatedPoll: relatedPollId,
-      metadata
+      metadata,
+      read: false
     });
     await log.save();
     return log;

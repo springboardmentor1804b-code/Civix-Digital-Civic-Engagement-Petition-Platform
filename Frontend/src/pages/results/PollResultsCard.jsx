@@ -4,111 +4,73 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import PersonIcon from '@mui/icons-material/Person';
 
 const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, realTimeUpdate = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const previousVotesRef = useRef({});
 
-  // Calculate real-time vote distribution
+  // Calculate real-time vote distribution from actual votes array
   const voteDistribution = useMemo(() => {
-    if (!poll) return [];
+    if (!poll || !poll.options) return [];
 
-    let totalVotes = 0;
-    let voteBreakdown = {};
+    const votes = poll.votes || [];
+    const totalVotes = votes.length;
 
-    // Handle different vote data structures
-    if (poll.votes) {
-      if (Array.isArray(poll.votes)) {
-        // If votes is an array of vote objects
-        totalVotes = poll.votes.length;
-        poll.votes.forEach(vote => {
-          const option = vote.option || vote.choice;
-          voteBreakdown[option] = (voteBreakdown[option] || 0) + 1;
-        });
-      } else if (typeof poll.votes === 'object') {
-        // If votes is an object with option counts
-        voteBreakdown = { ...poll.votes };
-        totalVotes = Object.values(poll.votes).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0);
-      }
-    }
+    return poll.options.map((option, index) => {
+      const optionVotes = votes.filter(vote => vote.option === index).length;
+      const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100 * 10) / 10 : 0;
 
-    // Use existing voteDistribution if available, otherwise calculate from votes
-    if (poll.voteDistribution && Array.isArray(poll.voteDistribution)) {
-      return poll.voteDistribution.map(option => ({
-        ...option,
-        votes: typeof option.votes === 'number' ? option.votes : 0,
-        percentage: typeof option.percentage === 'number' ? option.percentage : 0
-      }));
-    }
-
-    // Calculate distribution from options and votes
-    if (poll.options && Array.isArray(poll.options)) {
-      return poll.options.map((option, index) => {
-        const optionText = typeof option === 'string' ? option : option.text || option;
-        let optionVotes = 0;
-
-        // Try different ways to get vote count
-        if (voteBreakdown[optionText] !== undefined) {
-          optionVotes = voteBreakdown[optionText];
-        } else if (voteBreakdown[index] !== undefined) {
-          optionVotes = voteBreakdown[index];
-        } else if (voteBreakdown[option] !== undefined) {
-          optionVotes = voteBreakdown[option];
-        }
-
-        const percentage = totalVotes > 0 ? ((optionVotes / totalVotes) * 100) : 0;
-
-        return {
-          option: optionText,
-          votes: typeof optionVotes === 'number' ? optionVotes : 0,
-          percentage: Math.round(percentage * 10) / 10 // Round to 1 decimal
-        };
-      });
-    }
-
-    return [];
+      return {
+        option: typeof option === 'string' ? option : option.text || option,
+        votes: optionVotes,
+        percentage
+      };
+    });
   }, [poll]);
 
-  // Calculate real-time metrics
+  // Calculate real-time metrics - UPDATED TO VOTES PER DAY
   const metrics = useMemo(() => {
-    const totalVotes = voteDistribution.reduce((sum, option) => sum + option.votes, 0);
+    const totalVotes = poll.votes?.length || 0;
     
-    // Calculate engagement rate
+    // Calculate engagement rate (votes per day)
     let engagementRate = 0;
-    if (poll.createdAt) {
+    if (poll.createdAt && totalVotes > 0) {
       const createdAt = new Date(poll.createdAt);
-      const hoursAgo = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
-      engagementRate = hoursAgo > 0 ? Math.round((totalVotes / Math.max(hoursAgo, 1)) * 10) / 10 : 0;
+      const now = new Date();
+      const daysAgo = Math.max((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24), 0.01); // Minimum 0.01 day to avoid division by zero
+      engagementRate = Math.round((totalVotes / daysAgo) * 10) / 10;
     }
 
-    return {
-      totalVotes: poll.totalVotes || totalVotes,
-      engagementRate: poll.engagementRate || engagementRate,
-      participationRate: poll.participationRate || (totalVotes > 0 ? 100 : 0)
-    };
-  }, [poll, voteDistribution]);
+    // Calculate participation rate based on target or baseline
+    const targetVotes = poll.targetVotes || 100; // Default target
+    const participationRate = Math.min(Math.round((totalVotes / targetVotes) * 100), 100);
 
-  // Track vote changes for animations - FIXED VERSION
+    return {
+      totalVotes,
+      engagementRate,
+      participationRate: totalVotes > 0 ? participationRate : 0
+    };
+  }, [poll]);
+
+  // Track vote changes for animations
   useEffect(() => {
     const currentVotes = {};
     voteDistribution.forEach(option => {
       currentVotes[option.option] = option.votes;
     });
 
-    // Check if votes changed by comparing with ref
     const previousVotes = previousVotesRef.current;
     const hasChanged = Object.keys(currentVotes).some(
       option => currentVotes[option] !== previousVotes[option]
     );
 
-    // Only trigger animation if there was a previous state and votes changed
     if (hasChanged && Object.keys(previousVotes).length > 0) {
       setAnimationKey(prev => prev + 1);
     }
 
-    // Update ref with current votes
     previousVotesRef.current = currentVotes;
-  }, [voteDistribution]); // Remove previousVotes from dependency array
+  }, [voteDistribution]);
 
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
@@ -118,21 +80,12 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
     }
   };
 
-  const getSentimentIcon = (sentiment) => {
-    switch (sentiment) {
-      case 'positive': return <CheckCircleIcon className="w-4 h-4" />;
-      case 'negative': return <CancelIcon className="w-4 h-4" />;
-      default: return <RemoveCircleIcon className="w-4 h-4" />;
-    }
-  };
-
   const getEngagementColor = (rate) => {
-    if (rate > 5) return 'text-green-600';
-    if (rate > 2) return 'text-yellow-600';
+    if (rate > 50) return 'text-green-600';
+    if (rate > 20) return 'text-yellow-600';
     return 'text-red-600';
   };
 
-  // Animation classes for progress bars
   const getProgressBarClasses = (index, hasUpdate = false) => {
     const baseClasses = 'h-full transition-all duration-500';
     const colorClasses = index === 0 ? 'bg-blue-500' :
@@ -146,32 +99,15 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:scale-105 hover:-translate-y-1
-    }`} 
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-300 transform hover:scale-105 hover:-translate-y-1" 
     style={{ 
-      height: '400px', // Fixed height
-      width: '100%',   // Fixed width (or use specific px value like '350px')
-      maxWidth: '400px' // Optional: set max width for consistency
+      height: '400px',
+      width: '100%',
+      maxWidth: '400px'
     }}>
       
-      {/* Scrollable content container */}
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Header - Fixed at top */}
         <div className="flex-shrink-0">
-          {/* Highlight indicator */}
-          {/* {isHighlighted && (
-            <div className="mb-4 p-3 bg-purple-100 border border-purple-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                <AssessmentIcon className="w-4 h-4 text-purple-600" />
-                <span className="text-sm font-medium text-purple-800">
-                  Detailed Analysis View
-                </span>
-              </div>
-            </div>
-          )} */}
-
-          {/* Header */}
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
@@ -182,18 +118,9 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
               
               {showSentiment && poll.sentiment && (
                 <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1 ${getSentimentColor(poll.sentiment)}`}>
-                  {getSentimentIcon(poll.sentiment)}
                   {poll.sentiment}
                 </span>
               )}
-
-              {/* Real-time indicator */}
-              {/* {realTimeUpdate && (
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                  Live
-                </span>
-              )} */}
             </div>
             
             <span className="text-xs text-gray-500 flex-shrink-0">
@@ -201,15 +128,12 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
             </span>
           </div>
 
-          {/* Question */}
           <h3 className="text-lg font-semibold text-gray-900 mb-4 line-clamp-3">
             {poll.question || poll.title || 'No question available'}
           </h3>
         </div>
 
-        {/* Scrollable middle content */}
         <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-          {/* Vote Distribution */}
           <div className="space-y-3 mb-6" key={animationKey}>
             {voteDistribution.length > 0 ? (
               voteDistribution.map((option, index) => (
@@ -246,9 +170,7 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
           </div>
         </div>
 
-        {/* Footer - Fixed at bottom */}
         <div className="flex-shrink-0 mt-auto">
-          {/* Metrics */}
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div className="text-center">
               <div className="text-xl font-bold text-blue-600" key={`total-${metrics.totalVotes}`}>
@@ -264,7 +186,7 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
                 {metrics.engagementRate}
               </div>
               <div className="text-xs text-gray-500">
-                Engagement
+                Votes/Day
               </div>
             </div>
             
@@ -278,20 +200,21 @@ const PollResultsCard = ({ poll, showSentiment = true, isHighlighted = false, re
             </div>
           </div>
 
-          {/* Additional Info */}
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center gap-1 truncate">
                 <LocationOnIcon className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{poll.location || 'No location'}</span>
               </div>
-              <span className="flex-shrink-0 ml-2">By {poll.creator?.name || 'Anonymous'}</span>
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                <PersonIcon className="w-3 h-3" />
+                <span>By {poll.creator?.name || 'Anonymous'}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Custom scrollbar styles */}
       <style jsx>{`
         .scrollbar-thin::-webkit-scrollbar {
           width: 6px;

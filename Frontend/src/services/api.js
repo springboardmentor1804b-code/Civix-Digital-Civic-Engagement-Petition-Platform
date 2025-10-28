@@ -6,10 +6,10 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Include cookies
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Include cookies
 });
 
 // Add request interceptor to include auth token
@@ -45,11 +45,14 @@ api.interceptors.request.use(
     // Log token for debugging (remove in production)
     if (token) {
       console.log("Token present:", token.substring(0, 20) + "...");
+    } else {
+      console.log("No token found in localStorage");
     }
 
     return config;
   },
   (error) => {
+    console.error("Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
@@ -64,7 +67,7 @@ api.interceptors.response.use(
 
     // Handle auth errors
     if (error.response?.status === 401) {
-      console.log("Authentication failed - clearing storage");
+      console.error("Unauthorized - redirecting to login");
 
       // Clear invalid auth data
       localStorage.removeItem("user");
@@ -98,6 +101,5 @@ export const getPetitions = async () => {
     throw err;
   }
 };
-
 
 export default api;

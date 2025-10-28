@@ -1,5 +1,5 @@
 import { pollService } from './pollService';
-import { petitionService } from './petitionService';
+import petitionService from './petitionService';
 import { reportService } from './reportService';
 
 export const searchService = {
@@ -41,27 +41,14 @@ export const searchService = {
           highlights: getHighlights(poll, searchTerm, 'poll')
         }));
       } catch (err) {
-        console.log('Poll search error:', err);
+        console.error('Poll search error:', err);
       }
 
       // Search petitions
       try {
-        if (petitionService && petitionService.getPetitions) {
-          const petitions = await petitionService.getPetitions();
-          results.petitions = petitions.filter(petition => {
-            const matchesSearch =
-              petition.title?.toLowerCase().includes(searchTerm) ||
-              petition.description?.toLowerCase().includes(searchTerm) ||
-              petition.location?.toLowerCase().includes(searchTerm) ||
-              petition.category?.toLowerCase().includes(searchTerm);
-            
-            // Apply filters
-            if (filters.status && petition.status !== filters.status) return false;
-            if (filters.location && petition.location !== filters.location) return false;
-            if (filters.category && petition.category !== filters.category) return false;
-            
-            return matchesSearch;
-          }).map(petition => ({
+        const response = await petitionService.searchPetitions(searchTerm, filters);
+        if (response.success) {
+          results.petitions = response.results.map(petition => ({
             ...petition,
             type: 'petition',
             title: petition.title,
@@ -71,7 +58,7 @@ export const searchService = {
           }));
         }
       } catch (err) {
-        console.log('Petition search error:', err);
+        console.error('Petition search error:', err);
       }
 
       // Search reports
@@ -101,7 +88,7 @@ export const searchService = {
           }));
         }
       } catch (err) {
-        console.log('Report search error:', err);
+        console.error('Report search error:', err);
       }
 
       results.total = results.polls.length + results.petitions.length + results.reports.length;

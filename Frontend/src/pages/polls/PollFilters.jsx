@@ -1,14 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { pollService } from '../../services/pollService';
 
 const PollFilters = ({ activeFilter, onFilterChange }) => {
   const [dropdowns, setDropdowns] = useState({ location: false, status: false, type: false });
   const [isMobile, setIsMobile] = useState(false);
+  const [locations, setLocations] = useState(['All Locations']);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [locationCounts, setLocationCounts] = useState({});
 
-  const pollTypes = ['Active Polls', 'Polls I Voted On', 'My Polls', 'Closed Polls'];
-  const locations = ['All Locations', 'San Diego, CA', 'Los Angeles, CA', 'New York, NY', 'Chicago, IL', 'Miami, FL'];
+  const pollTypes = ['Active Polls', 'Polls I Voted On', 'My Polls', 'All Polls'];
   const statuses = ['All Status', 'Active', 'Closed'];
+
+  // Fetch real-time locations from polls
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        setLoadingLocations(true);
+        const polls = await pollService.getPolls();
+        
+        // Extract unique locations and count polls per location
+        const locationMap = {};
+        polls.forEach(poll => {
+          if (poll.location) {
+            locationMap[poll.location] = (locationMap[poll.location] || 0) + 1;
+          }
+        });
+        
+        // Sort locations alphabetically
+        const uniqueLocations = Object.keys(locationMap).sort();
+        
+        setLocations(['All Locations', ...uniqueLocations]);
+        setLocationCounts(locationMap);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+        setLocations(['All Locations']);
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+
+    fetchLocations();
+    
+    // Refresh locations every 30 seconds
+    const interval = setInterval(fetchLocations, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Check if screen is mobile size
   useEffect(() => {
@@ -53,6 +92,9 @@ const PollFilters = ({ activeFilter, onFilterChange }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Calculate total polls count
+  const totalPolls = Object.values(locationCounts).reduce((sum, count) => sum + count, 0);
 
   return (
     <div className="mb-6">
@@ -142,13 +184,17 @@ const PollFilters = ({ activeFilter, onFilterChange }) => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4">
-            {/* Location Filter */}
+            {/* Location Filter - Real-time from polls */}
             <div className="relative dropdown-container">
               <button
                 onClick={() => toggleDropdown('location')}
-                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                disabled={loadingLocations}
+                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{activeFilter.location || 'All Locations'}</span>
+                
+                <span>
+                  {loadingLocations ? 'Loading...' : (activeFilter.location || 'All Locations')}
+                </span>
                 <svg 
                   className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${dropdowns.location ? 'rotate-180' : ''}`} 
                   fill="none" 
@@ -158,21 +204,39 @@ const PollFilters = ({ activeFilter, onFilterChange }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {dropdowns.location && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
-                  {locations.map(item => (
-                    <button 
-                      key={item} 
-                      onClick={() => handleSelect('location', item)} 
-                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                        activeFilter.location === item
-                          ? 'bg-green-50 text-green-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
+              {dropdowns.location && !loadingLocations && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {locations.map(item => {
+                    const count = item === 'All Locations' ? totalPolls : (locationCounts[item] || 0);
+                    return (
+                      <button 
+                        key={item} 
+                        onClick={() => handleSelect('location', item)} 
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between ${
+                          activeFilter.location === item
+                            ? 'bg-green-50 text-green-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {item !== 'All Locations' && <LocationOnIcon sx={{ fontSize: 14 }} />}
+                          {item}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          activeFilter.location === item
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {locations.length === 1 && (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No locations available
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -215,13 +279,32 @@ const PollFilters = ({ activeFilter, onFilterChange }) => {
             {/* Clear Filters */}
             <button
               onClick={clearFilters}
-              className="px-3 py-2 text-sm bg-gray-200 rounded text-gray-600 hover:text-gray-800"
+              className="px-3 py-2 text-sm bg-gray-200 rounded text-gray-600 hover:text-gray-800 transition-colors"
             >
               Clear
             </button>
           </div>
         </div>
       </div>
+
+      {/* Location Filter Info Banner */}
+      {activeFilter.location && activeFilter.location !== 'All Locations' && (
+        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+          <LocationOnIcon className="text-green-600" sx={{ fontSize: 20 }} />
+          <span className="text-sm text-green-800">
+            Showing polls for <strong>{activeFilter.location}</strong>
+            <span className="ml-2 text-green-600">
+              ({locationCounts[activeFilter.location] || 0} {locationCounts[activeFilter.location] === 1 ? 'poll' : 'polls'})
+            </span>
+          </span>
+          <button
+            onClick={() => handleSelect('location', 'All Locations')}
+            className="ml-auto text-green-600 hover:text-green-800 text-sm font-medium"
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,8 +8,6 @@ export const signPetition = async (req, res) => {
     const { petitionId } = req.params;
     const userId = req.body.userId || req.query.userId;
 
-    console.log('Signature Controller - Petition ID:', petitionId, 'User ID:', userId);
-
     // Check if petition exists
     const petition = await Petition.findById(petitionId);
     if (!petition) {
@@ -37,14 +35,13 @@ export const signPetition = async (req, res) => {
       });
     }
 
-    // Create new signature using your schema structure
+    // Create new signature
     const signature = new Signature({ 
       petition: petitionId, 
       user: userId 
     });
     
     await signature.save();
-    console.log('New signature created:', signature._id);
 
     // Get total signature count for this petition
     const totalSignatures = await Signature.countDocuments({ petition: petitionId });
