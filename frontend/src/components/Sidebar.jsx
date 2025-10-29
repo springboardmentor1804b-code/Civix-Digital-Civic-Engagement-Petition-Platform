@@ -7,12 +7,13 @@ function Sidebar({ navClick, setNavClick }) {
     const { logout } = useAuth();
     return (
         <div
-            className={`fixed top-17 left-0 h-[calc(100vh-64px)] bg-gray-100 font-bold px-4 py-6 shadow-md z-50 transform transition-transform duration-500 ease-in-out ${navClick ? "translate-x-0" : "translate-x-[-100%]"} md:translate-x-0`} >
+            className={`fixed top-17 left-0 h-[calc(100dvh-64px)] bg-gray-100 font-bold px-4 py-6 shadow-md z-50 transform transition-transform duration-500 ease-in-out ${navClick ? "translate-x-0" : "translate-x-[-100%]"} md:translate-x-0`} >
             <div className="flex flex-col h-full">
+                {/* ... (other NavLinks remain the same) ... */}
                 <NavLink
                     to="/"
                     className={({ isActive }) =>
-                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                     onClick={() => setNavClick(false)}>
                     <i className="fa-solid fa-house mr-2"></i>
@@ -21,7 +22,7 @@ function Sidebar({ navClick, setNavClick }) {
                 <NavLink
                     to="/petitions"
                     className={({ isActive }) =>
-                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                     onClick={() => setNavClick(false)}>
                     <i className="fa-regular fa-file-zipper mr-2"></i>
@@ -30,47 +31,51 @@ function Sidebar({ navClick, setNavClick }) {
                 <NavLink
                     to="/polls"
                     className={({ isActive }) =>
-                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                     onClick={() => setNavClick(false)}>
                     <i className="fa-solid fa-square-poll-vertical mr-2"></i>
                     Polls
                 </NavLink>
                 <NavLink
-                    to="/Reports"
+                    to="/Reports" // Note: Route in main.jsx is '/reports', case might matter. Consider changing to lowercase '/reports' if needed.
                     className={({ isActive }) =>
-                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                     onClick={() => setNavClick(false)}>
                     <i className="fa-solid fa-signal mr-2"></i>
                     Reports
                 </NavLink>
-                <NavLink
-                    to="/Oficials"
+                 <NavLink
+                    to="/officials" // Corrected path
                     className={({ isActive }) =>
-                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                        `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                     onClick={() => setNavClick(false)}>
                     <i className="fa fa-user mr-2" ></i>
-                    Officials</NavLink>
+                    Officials
+                </NavLink>
                 <div className="mt-auto">
                     <NavLink
-                        to="/settings" // UPDATED
+                        to="/settings" // Corrected path
                         className={({ isActive }) =>
-                            `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                            `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                         onClick={() => setNavClick(false)}
                     >
                         <i className="fa-solid fa-gear mr-2"></i>
-                        Settings</NavLink> {/* UPDATED */}
+                        Settings {/* Corrected text */}
+                    </NavLink>
                     <NavLink
-                        to="/help-support" // UPDATED
+                        to="/help-support" // Corrected path
                         className={({ isActive }) =>
-                            `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"} 
+                            `block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl border-t-white bg-white ${isActive ? "text-orange-500 border-orange-400" : "text-gray-700  border-gray-400"}
                         hover:text-orange-700 hover:shadow-2xl`}
                         onClick={() => setNavClick(false)}>
                         <i className="fa-regular fa-circle-question mr-1"></i>
-                        Help & Support</NavLink>
+                        Help & Support
+                    </NavLink>
+                    {/* ... (Logout NavLink remains the same) ... */}
                     <NavLink
                         to="#"
                         className="block border-b-2 border-r-2 my-1.5 p-2 px-4 rounded-xl bg-orange-100 text-red-700 hover:bg-orange-300 hover:text-black items-center"

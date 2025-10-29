@@ -3,7 +3,7 @@ import parliament_image from "../../assets/parliament_image.jpeg";
 
 
 
-function Login({ setPage, onSubmit }) {
+function Login({ setPage, onSubmit, loading }) {
 
     const init = {
         email: "",
@@ -105,7 +105,7 @@ function Login({ setPage, onSubmit }) {
                         </div>
 
                         <button type="submit" className="w-1/2 mt-6 ml-[25%] bg-sky-500 border border-gray-600 hover:bg-sky-600 text-white py-2 rounded-full font-medium">
-                            Sign In
+                            {loading ? "Logging in..." : "Login"}
                         </button>
                     </form>
                     <p className="text-center text-black mt-4">

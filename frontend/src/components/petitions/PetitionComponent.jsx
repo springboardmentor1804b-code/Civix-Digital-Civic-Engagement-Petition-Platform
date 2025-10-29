@@ -28,7 +28,7 @@ function CommentText({ text }) {
             {isOverflowing && (
                 <button
                     onClick={() => setExpanded(!expanded)}
-                    className="text-blue-500 text-xs mt-1"
+                    className="text-blue-500 text-xs mt-1 cursor-pointer"
                 >
                     {expanded ? "Read less" : "Read more"}
                 </button>
@@ -119,44 +119,6 @@ const PetitionDetailsModal = ({ isOpen, onClose, petition, onCommentAdded }) => 
     const [replyText, setReplyText] = useState("")
 
     const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
-
-    // const dummyComments = [
-    //     {
-    //         _id: '1',
-    //         user: { name: 'Alice' },
-    //         text: 'This is a very important petition. I fully support it!',
-    //         upVote: [/* voterId */],
-    //         downVote: ["user3"],
-    //         date: '2025-01-15T10:30:00Z',
-    //         reply: [
-    //             {
-    //                 _id: '1-1',
-    //                 user: { name: 'PetitionAuthor' },
-    //                 text: 'Thank you for your support, Alice!',
-    //                 upVote: ["user4", "68cb0008cdf2f43b1ebbaf97"],
-    //                 downVote: ["68f8afcea6306c4a7f2cc22f"],
-    //                 date: '2025-01-15T11:00:00Z'
-    //             },
-    //             {
-    //                 _id: '1-2',
-    //                 user: { name: 'Alice' },
-    //                 text: 'You\'re welcome! Let me know if there\'s anything else I can do to help.',
-    //                 upVote: [],
-    //                 downVote: ["user5"],
-    //                 date: '2025-10-15T11:15:00Z'
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         _id: '3',
-    //         user: { name: 'Charlie' },
-    //         text: 'Great initiative! I hope this gains more traction.',
-    //         // upVote: ["user10", "user11", "68cb0008cdf2f43b1ebbaf97"],
-    //         downVote: [],
-    //         date: '2025-01-17T14:45:00Z',
-    //         reply: []
-    //     }
-    // ]
 
     // Update internal comments state if the petition prop changes
     useEffect(() => {

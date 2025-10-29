@@ -6,10 +6,13 @@ function Settings() {
     const { user, token, logout, loading } = useAuth();
     const navigate = useNavigate();
 
+    // Define API URL using environment variable
+    const API_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001') + '/api/auth';
+
     // State for profile updates
     const [name, setName] = useState(user?.name || '');
     const [location, setLocation] = useState(user?.location || '');
-    
+
     // State for password change
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -35,17 +38,17 @@ function Settings() {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/auth/user', {
+            // Use API_URL defined above
+            const response = await fetch(`${API_URL}/user`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ name, location }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.msg || 'Failed to update profile.');
-            
+
             setProfileMessage({ type: 'success', text: 'Profile updated successfully! Refreshing...' });
-            // Reload user data in AuthContext by logging out and back in (or add a dedicated refreshUser method to context)
-            setTimeout(() => window.location.reload(), 1500); 
+            setTimeout(() => window.location.reload(), 1500);
         } catch (err) {
             setProfileMessage({ type: 'error', text: err.message });
         }
@@ -64,7 +67,8 @@ function Settings() {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/auth/change-password', {
+             // Use API_URL defined above
+            const response = await fetch(`${API_URL}/change-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ currentPassword, newPassword }),
@@ -88,7 +92,8 @@ function Settings() {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/auth/user', {
+             // Use API_URL defined above
+            const response = await fetch(`${API_URL}/user`, {
                 method: 'DELETE',
                 headers: { 'x-auth-token': token },
             });
@@ -112,10 +117,10 @@ function Settings() {
         return <p className={`p-3 rounded-lg mb-4 text-sm font-semibold ${color}`}>{message.text}</p>;
     };
 
-
+    // --- JSX remains the same ---
     return (
         <div className="pt-20 p-4 bg-gradient-to-b from-sky-200 to-gray-300 min-h-screen md:pl-54">
-            <div className="pl-6 pt-6">
+             <div className="pl-6 pt-6">
                 <h1 className="text-3xl font-bold text-gray-800 font-inria">Settings</h1>
                 <p className="text-gray-700 mt-1 font-bold">Manage your account and preferences.</p>
             </div>
@@ -127,33 +132,33 @@ function Settings() {
                     <Message message={profileMessage} />
                     <div className="mb-4">
                         <label htmlFor="name" className="block text-sm font-bold text-gray-700 mb-2">Name</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                     <div className="mb-4">
                         <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                        <input 
-                            type="email" 
+                        <input
+                            type="email"
                             id="email"
                             value={user?.email || ''}
-                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100" 
-                            disabled 
+                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100"
+                            disabled
                         />
                     </div>
                     <div className="mb-4">
                         <label htmlFor="location" className="block text-sm font-bold text-gray-700 mb-2">Location</label>
-                        <input 
+                        <input
                             type="text"
-                            id="location" 
+                            id="location"
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             placeholder="e.g., Mumbai, MH"
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                     <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 font-bold transition duration-300">
@@ -169,29 +174,29 @@ function Settings() {
                     <Message message={passwordMessage} />
                     <div className="mb-4">
                         <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
-                        <input 
+                        <input
                             type="password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                     <div className="mb-4">
                         <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
-                        <input 
+                        <input
                             type="password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                     <div className="mb-4">
                         <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
-                        <input 
+                        <input
                             type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
                         />
                     </div>
                     <button type="submit" className="w-full bg-gray-700 text-white p-3 rounded-lg hover:bg-gray-800 font-bold transition duration-300">
@@ -205,7 +210,7 @@ function Settings() {
                 <h2 className="text-2xl font-semibold text-red-700 mb-4">Danger Zone</h2>
                 <Message message={deleteMessage} />
                 <p className="text-gray-600 mb-4">Once you delete your account, all of your petitions, polls, and votes will be permanently removed. This action cannot be undone.</p>
-                <button 
+                <button
                     onClick={handleDeleteAccount}
                     className="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-800 font-bold transition duration-300"
                 >
