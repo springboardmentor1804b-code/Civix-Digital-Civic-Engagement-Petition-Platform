@@ -14,7 +14,8 @@ export default function Header() {
     return (
         <>
             <header className="flex flex-wrap justify-between items-center mx-auto bg-gray-100 p-3 shadow-md fixed w-full h-17">
-                <div className='flex'>
+                {/* ... (Left side remains the same) ... */}
+                 <div className='flex'>
                     <button
                         className="block text-2xl border rounded-xl hover:text-orange-700 mr-3 md:hidden px-1.5 cursor-pointer"
                         onClick={() => setNavClick(!navClick)} >
@@ -26,6 +27,7 @@ export default function Header() {
                     </Link>
                 </div>
 
+                {/* ... (Middle NavLinks remain the same) ... */}
                 <div className="hidden md:flex flex-row w-1/2 font-bold text-md ">
                     <NavLink
                         to="/"
@@ -49,14 +51,14 @@ export default function Header() {
                         Polls
                     </NavLink>
                     <NavLink
-                        to="/Reports"
+                        to="/Reports" // Note: Route in main.jsx is '/reports', case might matter. Consider changing to lowercase '/reports' if needed.
                         className={({ isActive }) =>
                             `py-2 pr-4 pl-3 ${isActive ? "text-orange-500 border-b-3" : "text-gray-700"} hover:text-orange-700`
                         }>
                         Reports
                     </NavLink>
                     <NavLink
-                        to="/Officials"
+                        to="/officials" // Corrected path
                         className={({ isActive }) =>
                             `py-2 pr-4 pl-3 ${isActive ? "text-orange-500 border-b-3" : "text-gray-700"} hover:text-orange-700`
                         }>
@@ -67,10 +69,11 @@ export default function Header() {
                 <Sidebar navClick={navClick} setNavClick={setNavClick} />
 
                 <div className="flex items-end justify-end ">
-                    <NavLink to="/Sitting" className='h-7 mr-2'>
+                    <NavLink to="/settings" className='h-7 mr-2'> {/* Corrected path */}
                         <i className="fa-solid fa-gear fa-lg"></i>
                     </NavLink>
-                    <div className='mr-1 cursor-pointer'>
+                    {/* ... (Rest of the right side remains the same) ... */}
+                     <div className='mr-1 cursor-pointer'>
                         <img src='https://cdn-icons-png.flaticon.com/512/565/565422.png' className="mr-1 h-7" alt="Logo " />
                     </div>
                     <button onClick={() => setuserIconClick(!userIconClick)}
@@ -79,7 +82,8 @@ export default function Header() {
                     </button>
                 </div>
 
-                {user && (
+                {/* ... (User dropdown remains the same) ... */}
+                 {user && (
                     <div className={`absolute top-full right-0 mt-1 w-auto bg-gray-200 px-4 py-2 z-50 rounded-b-2xl text-center shadow-xl border-l border-b border-gray-400
                         transform transition-transform duration-500 ease-in-out
                         ${userIconClick ? "translate-x-0 mr-1" : "translate-x-[100%]"}`}>

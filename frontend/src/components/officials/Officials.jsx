@@ -59,6 +59,19 @@ function Officials() {
 
   const { activity, petitions, polls } = analytics;
 
+  // Define colors based on the Reports page
+  const reportColors = {
+    green: 'rgba(16, 185, 129, 0.7)', // Active/Open
+    red: 'rgba(239, 68, 68, 0.7)',   // Closed
+    orange: 'rgba(249, 115, 22, 0.7)', // Under Review (Petition specific)
+  };
+  const reportBorderColors = {
+    green: 'rgba(16, 185, 129, 1)',
+    red: 'rgba(239, 68, 68, 1)',
+    orange: 'rgba(249, 115, 22, 1)',
+  };
+
+
   return (
     <div className="pt-20 p-4 bg-gradient-to-b from-sky-200 to-gray-300 min-h-screen md:pl-54">
       <h1 className="text-3xl font-bold text-gray-800 font-inria mb-6">
@@ -111,11 +124,22 @@ function Officials() {
             </h3>
             <Doughnut
               data={{
+                 // Maintain order: Active, Under Review, Closed if possible
                 labels: Object.keys(petitions.status || {}),
                 datasets: [
                   {
                     data: Object.values(petitions.status || {}),
-                    backgroundColor: ["#16a34a", "#f97316", "#dc2626"], 
+                    backgroundColor: [
+                        reportColors.green,   // Assuming order is Active, Under Review, Closed
+                        reportColors.orange,
+                        reportColors.red
+                        ],
+                    borderColor: [
+                        reportBorderColors.green,
+                        reportBorderColors.orange,
+                        reportBorderColors.red
+                    ],
+                    borderWidth: 1,
                   },
                 ],
               }}
@@ -127,21 +151,29 @@ function Officials() {
             </p>
           </div>
 
-          {/* Poll Analytics (Upgraded: Open first, Closed second) */}
+          {/* Poll Analytics (Updated Colors) */}
           <div className="bg-white p-4 rounded-xl shadow-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
               Poll Status
             </h3>
             <Pie
               data={{
-                labels: ["Open", "Closed"], 
+                labels: ["Open", "Closed"], // Ensure this order matches the data mapping
                 datasets: [
                   {
                     data: [
-                      polls.status?.Open || 0,
-                      polls.status?.Closed || 0,
+                      polls.status?.Open || 0, // Data for 'Open'
+                      polls.status?.Closed || 0, // Data for 'Closed'
                     ],
-                    backgroundColor: ["#16a34a", "#dc2626"], 
+                    backgroundColor: [
+                        reportColors.green, // Color for 'Open'
+                        reportColors.red    // Color for 'Closed'
+                        ],
+                    borderColor: [
+                        reportBorderColors.green,
+                        reportBorderColors.red
+                    ],
+                     borderWidth: 1,
                   },
                 ],
               }}
