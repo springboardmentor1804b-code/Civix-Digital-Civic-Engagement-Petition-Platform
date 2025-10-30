@@ -116,28 +116,28 @@ function Officials() {
         <h2 className="text-xl font-semibold text-gray-700 mb-4">
           My Petition & Poll Analytics
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-wrap justify-center md:justify-around items-center gap-6">
           {/* Petition Analytics */}
-          <div className="bg-white p-4 rounded-xl shadow-md">
+          <div className="bg-white p-4 rounded-xl shadow-md flex-1 min-w-[280px] max-w-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
               Petition Status
             </h3>
             <Doughnut
               data={{
-                 // Maintain order: Active, Under Review, Closed if possible
+                // Maintain order: Active, Under Review, Closed if possible
                 labels: Object.keys(petitions.status || {}),
                 datasets: [
                   {
                     data: Object.values(petitions.status || {}),
                     backgroundColor: [
-                        reportColors.green,   // Assuming order is Active, Under Review, Closed
-                        reportColors.orange,
-                        reportColors.red
-                        ],
+                      reportColors.green,   // Assuming order is Active, Under Review, Closed
+                      reportColors.orange,
+                      reportColors.red
+                    ],
                     borderColor: [
-                        reportBorderColors.green,
-                        reportBorderColors.orange,
-                        reportBorderColors.red
+                      reportBorderColors.green,
+                      reportBorderColors.orange,
+                      reportBorderColors.red
                     ],
                     borderWidth: 1,
                   },
@@ -152,7 +152,7 @@ function Officials() {
           </div>
 
           {/* Poll Analytics (Updated Colors) */}
-          <div className="bg-white p-4 rounded-xl shadow-md">
+          <div className="bg-white p-4 rounded-xl shadow-md flex-1 min-w-[280px] max-w-md">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
               Poll Status
             </h3>
@@ -166,14 +166,14 @@ function Officials() {
                       polls.status?.Closed || 0, // Data for 'Closed'
                     ],
                     backgroundColor: [
-                        reportColors.green, // Color for 'Open'
-                        reportColors.red    // Color for 'Closed'
-                        ],
-                    borderColor: [
-                        reportBorderColors.green,
-                        reportBorderColors.red
+                      reportColors.green, // Color for 'Open'
+                      reportColors.red    // Color for 'Closed'
                     ],
-                     borderWidth: 1,
+                    borderColor: [
+                      reportBorderColors.green,
+                      reportBorderColors.red
+                    ],
+                    borderWidth: 1,
                   },
                 ],
               }}

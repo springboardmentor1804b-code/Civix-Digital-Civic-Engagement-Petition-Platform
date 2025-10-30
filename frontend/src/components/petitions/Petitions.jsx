@@ -245,6 +245,7 @@ function Petitions() {
                                         className="cursor-pointer text-sm bg-transparent outline-none flex-1">
                                         <option value="All">All</option>
                                         <option value="Active">Active</option>
+                                        <option value="Under_Review">Under Review</option>
                                         <option value="Closed">Closed</option></select>
                                 </div>
                             </div>

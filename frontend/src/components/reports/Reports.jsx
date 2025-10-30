@@ -113,7 +113,7 @@ function Reports() {
                     'rgba(22, 163, 74, 0.7)', // Example color palette
                 ],
                 borderColor: [
-                     'rgba(59, 130, 246, 1)',
+                    'rgba(59, 130, 246, 1)',
                     'rgba(16, 185, 129, 1)',
                     'rgba(239, 68, 68, 1)',
                     'rgba(139, 92, 246, 1)',
@@ -139,21 +139,21 @@ function Reports() {
         ],
     };
 
-     const pollLocationData = {
+    const pollLocationData = {
         labels: Object.keys(pollAnl?.locations || {}),
         datasets: [
             {
                 label: 'Polls by Location',
                 data: Object.values(pollAnl?.locations || {}),
                 backgroundColor: [
-                     'rgba(59, 130, 246, 0.7)',
+                    'rgba(59, 130, 246, 0.7)',
                     'rgba(249, 115, 22, 0.7)',
                     'rgba(139, 92, 246, 0.7)',
                     'rgba(217, 70, 239, 0.7)',
                     'rgba(22, 163, 74, 0.7)', // Example color palette
                 ],
                 borderColor: [
-                     'rgba(59, 130, 246, 1)',
+                    'rgba(59, 130, 246, 1)',
                     'rgba(249, 115, 22, 1)',
                     'rgba(139, 92, 246, 1)',
                     'rgba(217, 70, 239, 1)',
@@ -177,7 +177,7 @@ function Reports() {
                 {/* Content for Community Overview */}
                 {comm && (
                     <div className='space-y-6'>
-                         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
                             <MetricCard
                                 title="Total Petitions"
                                 value={comm.totalPetitions}
@@ -199,9 +199,9 @@ function Reports() {
                         </div>
 
                         {/* --- Monthly Summary --- */}
-                         <div>
+                        <div>
                             <h2 className="text-xl font-bold text-gray-700 mb-4">Monthly Summary</h2>
-                             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8'>
+                            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8'>
                                 <MetricCard
                                     title="Petitions This Month"
                                     value={comm.petitionsThisMonth}
@@ -222,11 +222,11 @@ function Reports() {
                         <div>
                             <h2 className="text-xl font-bold text-gray-700 mb-4">Petition Analytics</h2>
                             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                                <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
+                                <div className="bg-white p-4 rounded-xl shadow-md max-w-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Petition Status</h3>
                                     <Doughnut data={petitionStatusData} />
                                 </div>
-                                <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
+                                <div className="bg-white p-4 rounded-xl shadow-md max-w-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Petition Categories</h3>
                                     <Pie data={petitionCategoryData} />
                                 </div>
@@ -237,11 +237,11 @@ function Reports() {
                         <div>
                             <h2 className="text-xl font-bold text-gray-700 mb-4">Poll Analytics</h2>
                             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                                <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
+                                <div className="bg-white p-4 rounded-xl shadow-md max-w-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Poll Status</h3>
                                     <Doughnut data={pollStatusData} />
                                 </div>
-                                <div className="bg-white p-4 rounded-xl shadow-md max-w-md mx-auto">
+                                <div className="bg-white p-4 rounded-xl shadow-md max-w-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Polls by Location</h3>
                                     <Pie data={pollLocationData} />
                                 </div>
@@ -257,7 +257,7 @@ function Reports() {
                 >
                     <i className="fa-solid fa-rotate-right mr-2"></i> Refresh Data
                 </button>
-
+                
             </div>
         </div>
     );
