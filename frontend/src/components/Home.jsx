@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext'; // 1. Import the useAuth hook
 import { useState, useEffect } from 'react';
 import PetitionComponent from './petitions/PetitionComponent';
+import PollCard from './polls/PollCard.jsx'; // IMPORT PollCard
 
 function Home() {
     const { user, token } = useAuth(); // 2. Get the user object from the context
@@ -18,11 +19,17 @@ function Home() {
     const [selectedCategoriy, setSelectedCategoriy] = useState('All Categories');
     const [selectedCity, setSelectedCity] = useState(cities[0] || "");
     const [loading, setLoading] = useState(true);
+    
     const [petitions, setPetitions] = useState([]);
+    const [polls, setPolls] = useState([]); // ADDED: State for all polls
+    
     const [userPoll, setUserPoll] = useState(null);
     const [myPetitions, setMyPetitions] = useState(0);
     const [SuccessfulPetitions, setSuccessfulPetitions] = useState(0);
-    const [filteredPetitions, setFilteredPetitions] = useState([]);
+    
+    const [filteredActivePetitions, setFilteredActivePetitions] = useState([]); // RENAMED
+    const [filteredActivePolls, setFilteredActivePolls] = useState([]); // ADDED: State for filtered polls
+
     function clearFilter() {
         setSelectedCategoriy('All Categories');
         setSelectedCity(cities[0] || "");
@@ -30,6 +37,7 @@ function Home() {
 
     const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
+    // Fetch Petitions
     useEffect(() => {
         const fetchPetitions = async () => {
             try {
@@ -46,6 +54,26 @@ function Home() {
         fetchPetitions();
     }, [API_URL]);
 
+    // Fetch Polls
+    useEffect(() => {
+        const fetchPolls = async () => {
+            if (!token) return;
+            try {
+                const response = await fetch(`${API_URL}/api/polls`, {
+                    headers: { 'x-auth-token': token }
+                });
+                const data = await response.json();
+                if (response.ok) setPolls(data);
+                else throw new Error('Failed to fetch polls');
+            } catch (error) {
+                console.error("Fetch polls error:", error);
+            }
+        };
+        fetchPolls();
+    }, [token, API_URL]);
+
+
+    // Fetch User's Poll Count
     useEffect(() => {
         const fetchPoll = async () => {
             try {
@@ -59,9 +87,10 @@ function Home() {
                 console.error("Fetch petitions error:", error);
             }
         };
-        fetchPoll();
+        if (token) fetchPoll();
     },[token,API_URL]);
 
+    // Calculate user's petition stats
     useEffect(() => {
         if (user) {
             const count = petitions.filter(p => p.author._id === user._id).length;
@@ -73,17 +102,81 @@ function Home() {
         }
     }, [petitions, user]);
 
+    // Filter active petitions and polls based on dropdowns
     useEffect(() => {
-        let filtered = [];
-        filtered = petitions.filter(p => p.status === "Active");
+        // --- Filter Petitions ---
+        let filteredP = petitions.filter(p => p.status === "Active");
         if (selectedCategoriy !== 'All Categories') {
-            filtered = filtered.filter(p => p.category === selectedCategoriy);
+            filteredP = filteredP.filter(p => p.category === selectedCategoriy);
         }
         if (selectedCity !== 'All locations') {
-            filtered = filtered.filter(p => p.location === selectedCity);
+            filteredP = filteredP.filter(p => p.location === selectedCity);
         }
-        setFilteredPetitions(filtered);
-    }, [petitions, selectedCity, selectedCategoriy, user]);
+        setFilteredActivePetitions(filteredP);
+
+        // --- Filter Polls ---
+        if (user) {
+            let filteredPl = polls.filter(p => new Date(p.closedAt) >= new Date()); // Active polls
+            if (selectedCity !== 'All locations') {
+                filteredPl = filteredPl.filter(p => p.targetLocation === selectedCity);
+            }
+            // No category filter for polls
+            setFilteredActivePolls(filteredPl);
+        }
+    }, [petitions, polls, selectedCity, selectedCategoriy, user]); // ADDED 'polls'
+
+
+    // --- PollCard Handlers ---
+    const handleVote = async (pollId, optionIndex) => {
+        try {
+            const response = await fetch(`${API_URL}/api/polls/${pollId}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ optionIndex })
+            });
+            const updatedPoll = await response.json();
+            if (!response.ok) throw new Error(updatedPoll.msg || 'Failed to vote.');
+            setPolls(polls.map(p => p._id === pollId ? updatedPoll : p));
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    const handleDeletePoll = async (pollId) => {
+        if (window.confirm('Are you sure you want to delete this poll ?')) {
+            try {
+                const response = await fetch(`${API_URL}/api/polls/${pollId}`, {
+                    method: 'DELETE',
+                    headers: { 'x-auth-token': token }
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.msg || 'Failed to delete poll.');
+                setPolls(polls.filter(p => p._id !== pollId));
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+    };
+
+    const handleEditPoll = async (updatedPoll) => {
+        try {
+            const response = await fetch(`${API_URL}/api/polls/${updatedPoll._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({
+                    title: updatedPoll.title,
+                    description: updatedPoll.description,
+                    options: updatedPoll.options,
+                    closedAt: updatedPoll.closedAt
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.msg || 'Failed to update poll.');
+            setPolls(polls.map(p => p._id === updatedPoll._id ? data : p));
+        } catch (error) {
+            alert(error.message);
+        }
+    }
 
 
     return (
@@ -120,11 +213,11 @@ function Home() {
                 </div>
             </div>
 
-            {/* Active Petitions */}
+            {/* Active Content Filters */}
             <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
                 {/* Title */}
                 <h2 className="text-lg sm:text-xl font-medium text-center mb-4 pb-2 border-b border-gray-400">
-                    Active Petitions Near You
+                    Active Content Near You
                 </h2>
 
                 {/* Mobile Stack, Desktop Flex */}
@@ -145,7 +238,7 @@ function Home() {
 
                     {/* Category */}
                     <div className="flex items-center gap-2">
-                        <span className="text-gray-700 text-sm font-medium min-w-fit">Category:</span>
+                        <span className="text-gray-700 text-sm font-medium min-w-fit">Category (Petitions):</span>
                         <select
                             value={selectedCategoriy}
                             onChange={(e) => setSelectedCategoriy(e.target.value)}
@@ -157,23 +250,50 @@ function Home() {
                     </div>
                 </div>
                 {loading ? (
-                    <p className="text-center py-10 text-gray-500">Loading petitions...</p>
+                    <p className="text-center py-10 text-gray-500">Loading content...</p>
                 ) :
-                filteredPetitions.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
-                        {filteredPetitions.map((petition) =>
-                            <PetitionComponent key={petition._id} petition={petition} user={user} />
-                        )}
-                    </div>) : (
+                (filteredActivePetitions.length === 0 && filteredActivePolls.length === 0) ? (
                     <div className='flex justify-center flex-wrap py-6'>
 
-                        <p className='w-full text-center text-2xl sm:font-mono py-2'>no petion found...............</p>
+                        <p className='w-full text-center text-2xl sm:font-mono py-2'>no active content found...............</p>
 
                         <button className='border px-2 text-xl text-white bg-gray-600 rounded-md cursor-pointer hover:bg-gray-400' onClick={() => clearFilter()}>Clear Filter</button>
                     </div>
-                )}
+                ) : null}
 
             </div>
+            
+            {/* Active Petitions Section */}
+            {!loading && filteredActivePetitions.length > 0 && (
+                 <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Active Petitions</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredActivePetitions.map((petition) =>
+                            // Note: Passing only user and petition. 
+                            // For full functionality (sign, edit, etc.), more handlers would be needed here.
+                            <PetitionComponent key={petition._id} petition={petition} user={user} />
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Active Polls Section */}
+            {!loading && filteredActivePolls.length > 0 && (
+                 <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Active Polls</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {filteredActivePolls.map((poll) => 
+                            <PollCard 
+                                key={poll._id} 
+                                poll={poll} 
+                                user={user} 
+                                handleVote={handleVote} 
+                                handleDeletePoll={handleDeletePoll} 
+                                handleEdit={handleEditPoll} />
+                        )}
+                    </div>
+                </div>
+            )}
 
         </div>
     )

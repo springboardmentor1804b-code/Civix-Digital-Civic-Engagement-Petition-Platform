@@ -2,7 +2,7 @@ import { useState } from "react";
 import govt_image from "../../assets/govt_of_india.jpg";
 
 
-function Register({ setPage, onSubmit }) {
+function Register({ setPage, onSubmit, loading }) {
 
     const init = {
         name: "",
@@ -194,7 +194,7 @@ function Register({ setPage, onSubmit }) {
                         </div>
 
                         <button type="submit" className="w-1/2 mt-3 ml-[25%] bg-sky-500 border border-gray-600 hover:bg-sky-600 text-white py-2 rounded-full font-medium">
-                            Create Account
+                            {loading ? "Creating account..." : "Create Account"}
                         </button>
                     </form>
 

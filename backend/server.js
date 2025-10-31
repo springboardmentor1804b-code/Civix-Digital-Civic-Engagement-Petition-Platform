@@ -17,6 +17,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/petitions', require('./routes/petitions'));
 app.use('/api/polls', require('./routes/polls'));
 app.use('/api/reports', require('./routes/reports')); // NEW: Reports Route added
+app.use('/api/officials', require('./routes/officials'));
 
 const PORT = process.env.PORT || 5001;
 

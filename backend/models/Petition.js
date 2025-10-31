@@ -12,6 +12,25 @@ const CommentSchema = new Schema({
     type: String,
     required: true,
   },
+  upVote: [{ type: String }], // Array to store votes (e.g., user IDs who voted)
+  downVote: [{ type: String }], // Array to store downvotes
+  reply: [{
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'user',
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+    },
+    upVote: [{ type: String }], // Votes for the reply
+    downVote: [{ type: String }], // Downvotes for the reply
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
   date: {
     type: Date,
     default: Date.now,
