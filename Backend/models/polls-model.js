@@ -19,6 +19,10 @@ const PollsSchema = new mongoose.Schema({
   location: String,
   allowMultiple: { type: Boolean, default: false },
   created_user_id: String,
+<<<<<<< HEAD
+=======
+  created_on:  { type: Date, default: Date.now },
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
   isClosed: {type: Boolean , default: false}
 });
 

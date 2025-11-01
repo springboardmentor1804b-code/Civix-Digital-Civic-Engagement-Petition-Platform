@@ -4,10 +4,19 @@ const User = require('../models/user-model');
 
 
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
 const get = async (req, res) => {
   const isFound = await Petition.find({});
   if (!isFound) {
     return res.status(400).json({ text: "Error in getting Petitions!Try Reload the Website" });
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
   }
   try {
     return res.status(200).json(isFound);
@@ -48,7 +57,10 @@ const updateStatus = async (req,res) => {
     await Petition.updateOne({_id: id} , {status});
     res.status(200).json({text : "Petition Updated"} )
   } catch (e) {
+<<<<<<< HEAD
     console.log(e);
+=======
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
     return res.status(500).json({ text: "Some Internal Server Error! Please Refresh the Page!And Try Again" });
   }
 }

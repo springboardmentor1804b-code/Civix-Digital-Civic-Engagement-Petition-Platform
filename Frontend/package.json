@@ -13,12 +13,23 @@
     "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.12.2",
     "chart.js": "^4.5.0",
+<<<<<<< HEAD
+=======
+    "framer-motion": "^12.23.24",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "lucide-react": "^0.548.0",
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
     "react": "^19.1.1",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.1",
     "react-toastify": "^11.0.5",
+<<<<<<< HEAD
+=======
+    "recharts": "^3.3.0",
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
     "tailwindcss": "^4.1.13",
     "uuid": "^13.0.0"
   },
@@ -31,6 +42,10 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+<<<<<<< HEAD
     "vite": "^7.1.2"
+=======
+    "vite": "^7.1.12"
+>>>>>>> 27173ba (Updated project files and improvements for Civix platform)
   }
 }
