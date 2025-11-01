@@ -4,10 +4,13 @@ const User = require('../models/user-model');
 
 
 
+
+
 const get = async (req, res) => {
   const isFound = await Petition.find({});
   if (!isFound) {
     return res.status(400).json({ text: "Error in getting Petitions!Try Reload the Website" });
+    
   }
   try {
     return res.status(200).json(isFound);
@@ -48,7 +51,6 @@ const updateStatus = async (req,res) => {
     await Petition.updateOne({_id: id} , {status});
     res.status(200).json({text : "Petition Updated"} )
   } catch (e) {
-    console.log(e);
     return res.status(500).json({ text: "Some Internal Server Error! Please Refresh the Page!And Try Again" });
   }
 }
