@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 # Team3-Infosys-CivixProject
-=======
+
 # 🏛️ Team3 - Infosys Civix Project
 
 **Civix** is a citizen engagement platform that empowers people to participate in local governance through **petitions, voting, and issue tracking**.  
