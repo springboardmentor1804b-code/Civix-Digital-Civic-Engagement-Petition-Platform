@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const API_URL = 'http://localhost:5001/api/auth';
+    const API_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001') + '/api/auth';
 
     useEffect(() => {
         const loadUser = async () => {
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         };
         loadUser();
-    }, [token]);
+    }, [token,API_URL]);
 
     const login = async (formData) => {
         const response = await fetch(`${API_URL}/login`, {

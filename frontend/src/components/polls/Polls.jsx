@@ -14,6 +14,12 @@ function Polls() {
         'Hyderabad, TS',
         'Pune, MH'
     ];
+    const tabs = [
+        { id: "active", label: "Active Polls" },
+        { id: "voted", label: "Polls I Voted In" },
+        { id: "my", label: "My Polls" },
+        { id: "closed", label: "Closed Polls" },
+    ];
 
     const { user, token } = useAuth();
     const [selectedCity, setSelectedCity] = useState("All locations");
@@ -22,13 +28,15 @@ function Polls() {
     const [filteredPolls, setFilteredPolls] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
+    const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
     // Fetch polls from backend
     useEffect(() => {
         if (!token) return;
         const fetchPolls = async () => {
             try {
-                const response = await fetch('http://localhost:5001/api/polls', {
+                const response = await fetch(`${API_URL}/api/polls`, {
                     headers: { 'x-auth-token': token }
                 });
                 const data = await response.json();
@@ -41,7 +49,7 @@ function Polls() {
             }
         };
         fetchPolls();
-    }, [token]);
+    }, [token, API_URL]);
 
     // Filter polls
     useEffect(() => {
@@ -67,7 +75,7 @@ function Polls() {
     // Handle voting by option index
     const handleVote = async (pollId, optionIndex) => {
         try {
-            const response = await fetch(`http://localhost:5001/api/polls/${pollId}/vote`, {
+            const response = await fetch(`${API_URL}/api/polls/${pollId}/vote`, {
                 method: 'POST', // match backend
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ optionIndex }) // match backend expected payload
@@ -85,7 +93,7 @@ function Polls() {
     const handleDeletePoll = async (pollId) => {
         if (window.confirm('Are you sure you want to delete this poll ?')) {
             try {
-                const response = await fetch(`http://localhost:5001/api/polls/${pollId}`, {
+                const response = await fetch(`${API_URL}/api/polls/${pollId}`, {
                     method: 'DELETE',
                     headers: { 'x-auth-token': token }
                 });
@@ -100,7 +108,7 @@ function Polls() {
 
     const handleEdit = async (updatedPoll) => {
         try {
-            const response = await fetch(`http://localhost:5001/api/polls/${updatedPoll._id}`, {
+            const response = await fetch(`${API_URL}/api/polls/${updatedPoll._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({
@@ -134,6 +142,7 @@ function Polls() {
                 onClose={() => setCreateModalOpen(false)} 
                 onPollCreated={handlePollCreated} 
                 cities={cities} 
+                API_URL={API_URL}
             />
             <div className="pt-20 p-4 bg-gradient-to-b from-sky-200 to-gray-300 min-h-screen md:pl-54">
                 <div>
@@ -151,20 +160,64 @@ function Polls() {
                     </div>
 
                     <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-                            <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg">
-                                <button onClick={() => setActiveTab('active')} className={`cursor-pointer py-2 px-4 rounded-md font-semibold text-sm ${activeTab === 'active' ? 'bg-white shadow' : 'text-gray-600'}`}>Active Polls</button>
-                                <button onClick={() => setActiveTab('voted')} className={`cursor-pointer py-2 px-4 rounded-md font-semibold text-sm ${activeTab === 'voted' ? 'bg-white shadow' : 'text-gray-600'}`}>Polls I Voted In</button>
-                                <button onClick={() => setActiveTab('my')} className={`cursor-pointer py-2 px-4 rounded-md font-semibold text-sm ${activeTab === 'my' ? 'bg-white shadow' : 'text-gray-600'}`}>My Polls</button>
-                                <button onClick={() => setActiveTab('closed')} className={`cursor-pointer py-2 px-4 rounded-md font-semibold text-sm ${activeTab === 'closed' ? 'bg-white shadow' : 'text-gray-600'}`}>Closed Polls</button>
+                        <div className="flex flex-col min-[690px]:flex-row justify-between items-center mb-6">
+                            
+                            <div className="hidden min-[542px]:max-[768px]:flex min-[768px]:hidden min-[890px]:flex items-center space-x-1 bg-gray-100 p-1 rounded-lg justify-center">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`py-2 px-4 rounded-md font-semibold text-sm cursor-pointer hover:text-black ${activeTab === tab.id ? "bg-white shadow" : "text-gray-600"
+                                            }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </div>
-                            <div className='border border-gray-300 rounded-lg p-2 bg-sky-200 mt-4 sm:mt-0'>
-                                <i className="fa-solid fa-location-dot"></i>
+
+                            {/* --- Mobile + Large Screen (Dropdown View) --- */}
+                            <div className="min-[542px]:max-[768px]:hidden min-[890px]:hidden relative w-full sm:w-40">
+                                <button
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    className="w-full flex justify-between items-center py-2 px-4 rounded-md border border-gray-300/60 bg-gray-100 shadow text-sm font-semibold cursor-pointer"
+                                >
+                                    {tabs.find((t) => t.id === activeTab)?.label}
+                                    <span className="ml-2 text-gray-500">▼</span>
+                                </button>
+
+                                {dropdownOpen && (
+                                    <div className="absolute mt-1 w-full bg-white rounded-md shadow-lg z-10">
+                                        {tabs.map((tab) => (
+                                            <button
+                                                key={tab.id}
+                                                onClick={() => {
+                                                    setActiveTab(tab.id);
+                                                    setDropdownOpen(false);
+                                                }}
+                                                className={`block w-full text-left py-2 px-4 text-sm hover:bg-gray-100 ${activeTab === tab.id
+                                                        ? "font-semibold text-black"
+                                                        : "text-gray-600"
+                                                    }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="border border-gray-300 rounded-lg p-2 bg-sky-200 mt-4 min-[690px]:mt-0 min-w-35 w-full min-[542px]:w-auto flex items-center space-x-2">
+                                <i className="fa-solid fa-location-dot text-gray-700"></i>
                                 <select
                                     value={selectedCity}
-                                    onChange={(e) => setSelectedCity(e.target.value)} className="cursor-pointer text-sm">{cities.map((city, index) => (
-                                        <option key={index} value={city}>{city}</option>
-                                    ))}</select>
+                                    onChange={(e) => setSelectedCity(e.target.value)}
+                                    className="cursor-pointer text-sm bg-transparent outline-none flex-1"
+                                >
+                                    {cities.map((city, index) => (
+                                        <option key={index} value={city}>
+                                            {city}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 

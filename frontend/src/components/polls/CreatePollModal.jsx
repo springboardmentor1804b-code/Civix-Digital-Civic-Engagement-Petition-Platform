@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '/src/context/AuthContext.jsx';
 
-const CreatePollModal = ({ isOpen, onClose, onPollCreated, cities }) => {
+const CreatePollModal = ({ isOpen, onClose, onPollCreated, cities, API_URL }) => {
     const { token } = useAuth();
     const initialState = { question: '', description: '', options: ['', ''], location: 'All locations', date: '' };
     const [formData, setFormData] = useState(initialState);
@@ -39,7 +39,7 @@ const CreatePollModal = ({ isOpen, onClose, onPollCreated, cities }) => {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/polls', {
+            const response = await fetch(`${API_URL}/api/polls`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({

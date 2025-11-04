@@ -23,6 +23,10 @@ const getAggregateData = async (Model, groupField) => {
 // @access  Private (Requires authentication)
 exports.getCommunityReport = async (req, res) => {
   try {
+    // --- Monthly Summary Calc ---
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
     // --- Community Overview Metrics ---
     const totalPetitions = await Petition.countDocuments();
     const totalPolls = await Poll.countDocuments();
@@ -32,6 +36,11 @@ exports.getCommunityReport = async (req, res) => {
     const activePolls = await Poll.countDocuments({ closedAt: { $gte: new Date() } });
     const totalUsers = await User.countDocuments();
     const activeEngagement = activePetitions + activePolls;
+
+    // --- Monthly Summary ---
+    const petitionsThisMonth = await Petition.countDocuments({ date: { $gte: startOfMonth } });
+    const pollsThisMonth = await Poll.countDocuments({ createdAt: { $gte: startOfMonth } });
+
 
     // --- Petitions Breakdown ---
     const petitionStatus = await getAggregateData(Petition, 'status');
@@ -60,7 +69,9 @@ exports.getCommunityReport = async (req, res) => {
         totalUsers,
         activeEngagement,
         activePetitions,
-        activePolls
+        activePolls,
+        petitionsThisMonth, // ADDED
+        pollsThisMonth      // ADDED
       },
       petitionAnalytics: {
         status: petitionStatus,

@@ -7,7 +7,11 @@ const {
     signPetition,
     updatePetition,
     deletePetition,
-    updatePetitionStatus
+    updatePetitionStatus,
+    addComment,
+    addVoteToComment,
+    replyToComment
+    // Import new controller
 } = require('../controllers/petitionController');
 
 // @route   GET api/petitions
@@ -39,6 +43,20 @@ router.delete('/:id', auth, deletePetition);
 // @desc    Update petition status
 // @access  Private (Officials only)
 router.put('/:id/status', auth, updatePetitionStatus);
+
+// @route   POST api/petitions/:id/comment
+// @desc    Add a comment to a petition
+// @access  Private
+router.post('/:id/comment', auth, addComment);
+
+// @route   POST api/petitions/:id/comment/vote
+// @desc    Vote on a comment
+// @access  Private
+router.post('/:id/comment/vote', auth, addVoteToComment);
+
+// @route Post api/petitions/:id/comment/reply
+// @desc Reply to a comment
+router.post('/:id/comment/reply', auth, replyToComment);
 
 
 module.exports = router;

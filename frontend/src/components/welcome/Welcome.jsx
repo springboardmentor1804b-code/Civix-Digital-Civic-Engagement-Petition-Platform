@@ -6,8 +6,10 @@ import { useAuth } from "../../context/AuthContext";
 function Welcome() {
     const [page, setPage] = useState("login");
     const { login, register } = useAuth();
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (formData, type) => {
+        setLoading(true);
         try {
             if (type === 'login') {
                 await login(formData);
@@ -17,14 +19,16 @@ function Welcome() {
             }
         } catch (error) {
             alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <>
             {(page === "login") ?
-                <Login setPage={setPage} onSubmit={handleSubmit} /> :
-                <Register setPage={setPage} onSubmit={handleSubmit} />}
+                <Login setPage={setPage} onSubmit={handleSubmit} loading={loading} /> :
+                <Register setPage={setPage} onSubmit={handleSubmit} loading={loading} />}
         </>
     )
 }
